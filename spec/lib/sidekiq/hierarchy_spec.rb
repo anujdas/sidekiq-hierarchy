@@ -79,4 +79,12 @@ describe Sidekiq::Hierarchy do
       expect(Sidekiq::Hierarchy::Job.find(jid)).to be_complete
     end
   end
+
+  describe '.record_job_requeued' do
+    before { described_class.current_jid = jid }
+    it 'sets the status for the current job to requeued' do
+      described_class.record_job_requeued
+      expect(Sidekiq::Hierarchy::Job.find(jid)).to be_requeued
+    end
+  end
 end

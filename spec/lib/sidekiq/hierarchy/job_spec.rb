@@ -176,6 +176,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_complete
+      expect(root).to_not be_requeued
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.enqueue!).to be_truthy
@@ -190,6 +191,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to be_running
       expect(root).to_not be_enqueued
       expect(root).to_not be_complete
+      expect(root).to_not be_requeued
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.run!).to be_truthy
@@ -204,10 +206,26 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to be_complete
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
+      expect(root).to_not be_requeued
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.complete!).to be_truthy
       expect(new_job).to be_complete
+    end
+  end
+
+  describe '#requeued!' do
+    let(:new_job) { described_class.find('000000000000') }
+    it 'sets the job status to requeued' do
+      expect(root.requeue!).to be_truthy
+      expect(root).to be_requeued
+      expect(root).to_not be_enqueued
+      expect(root).to_not be_running
+      expect(root).to_not be_complete
+    end
+    it 'operates correctly on an unpersisted job' do
+      expect(new_job.requeue!).to be_truthy
+      expect(new_job).to be_requeued
     end
   end
 end

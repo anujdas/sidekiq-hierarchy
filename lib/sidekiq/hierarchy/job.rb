@@ -9,6 +9,7 @@ module Sidekiq
       STATUS_QUEUED = '0'.freeze
       STATUS_RUNNING = '1'.freeze
       STATUS_COMPLETE = '2'.freeze
+      STATUS_REQUEUED = '3'.freeze
 
       ONE_MONTH = 60 * 60 * 24 * 30  # key expiration
 
@@ -143,6 +144,14 @@ module Sidekiq
 
       def complete?
         self[STATUS_FIELD] == STATUS_COMPLETE
+      end
+
+      def requeue!
+        self[STATUS_FIELD] = STATUS_REQUEUED
+      end
+
+      def requeued?
+        self[STATUS_FIELD] == STATUS_REQUEUED
       end
 
 
