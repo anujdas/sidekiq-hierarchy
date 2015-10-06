@@ -25,12 +25,14 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.record_job_enqueued' do
+    let(:sidekiq_job) { {'jid' => child_jid} }
     let(:child_job) { Sidekiq::Hierarchy::Job.find(child_jid) }
+
     context 'from a non-sidekiq job (Rails action)' do
       context 'with the current jid set by middleware' do
         before { described_class.current_jid = jid }
         it 'creates a new child Job and links it to the current jid' do
-          expect { described_class.record_job_enqueued(child_jid) }.
+          expect { described_class.record_job_enqueued(sidekiq_job) }.
             to change { Sidekiq::Hierarchy::Job.find(jid).children }.
             from( [] ).
             to( [child_job] )
@@ -41,7 +43,7 @@ describe Sidekiq::Hierarchy do
 
       context 'without the current jid set' do
         it 'creates a new Job' do
-          expect { described_class.record_job_enqueued(child_jid) }.
+          expect { described_class.record_job_enqueued(sidekiq_job) }.
             to change { child_job.exists? }.
             from(false).
             to(true)
@@ -54,7 +56,7 @@ describe Sidekiq::Hierarchy do
     context 'from within a sidekiq job' do
       before { described_class.current_jid = jid }
       it 'creates a new child Job and links it to the current jid' do
-        expect { described_class.record_job_enqueued(child_jid) }.
+        expect { described_class.record_job_enqueued(sidekiq_job) }.
           to change { Sidekiq::Hierarchy::Job.find(jid).children }.
           from( [] ).
           to( [child_job] )
