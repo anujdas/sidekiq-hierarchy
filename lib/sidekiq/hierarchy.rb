@@ -18,13 +18,13 @@ module Sidekiq
         Thread.current[:jid]
       end
 
-      def record_job_enqueued(jid)
+      def record_job_enqueued(jid, redis_pool=nil)
         if current_jid  # this is an intermediate job, having both parent and children
-          current_job = Sidekiq::Hierarchy::Job.find(current_jid)
-          child_job = Sidekiq::Hierarchy::Job.create(jid)
+          current_job = Sidekiq::Hierarchy::Job.find(current_jid, redis_pool)
+          child_job = Sidekiq::Hierarchy::Job.create(jid, redis_pool)
           current_job.add_child(child_job)
         else  # this is a root-level job, i.e., start of a workflow
-          Sidekiq::Hierarchy::Job.create(jid)
+          Sidekiq::Hierarchy::Job.create(jid, redis_pool)
         end
       end
 

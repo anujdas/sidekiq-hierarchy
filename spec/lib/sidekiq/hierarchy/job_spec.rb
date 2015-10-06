@@ -17,11 +17,28 @@ describe Sidekiq::Hierarchy::Job do
     level2.each { |child| level1.first.add_child(child) }
   end
 
+  shared_examples_for 'redis_pool support' do
+    let(:alt_redis) { Redis.new }
+    let(:alt_redis_pool) { ConnectionPool.new { alt_redis } }
+    it 'defaults to using the Sidekiq redis connection' do
+      subject.send(:redis) { |c| c.set 'test', '1' }
+      expect(Sidekiq.redis { |c| c.get('test') }).to eq '1'
+    end
+    it 'accepts an alternate redis_pool' do
+      alt_subject.send(:redis) { |c| c.set 'test', '1' }
+      expect(alt_redis.get('test')).to eq '1'
+    end
+  end
+
   describe '.find' do
     let(:existing_node) { described_class.find(root_jid) }
     it 'instantiates a Job object for the given jid' do
       expect(existing_node).to be_a(described_class)
       expect(existing_node.jid).to eq root_jid
+    end
+    it_behaves_like 'redis_pool support' do
+      let(:subject) { described_class.find(root_jid) }
+      let(:alt_subject) { described_class.find(root_jid, alt_redis_pool) }
     end
   end
 
@@ -32,6 +49,10 @@ describe Sidekiq::Hierarchy::Job do
       expect(new_node).to be_a(described_class)
       expect(new_node.jid).to eq new_jid
       expect(new_node).to be_enqueued
+    end
+    it_behaves_like 'redis_pool support' do
+      let(:subject) { described_class.create(root_jid) }
+      let(:alt_subject) { described_class.create(root_jid, alt_redis_pool) }
     end
   end
 
@@ -87,6 +108,10 @@ describe Sidekiq::Hierarchy::Job do
       expect(level1.first.parent).to eq root
       expect(level2.first.parent).to eq level1.first
     end
+    it_behaves_like 'redis_pool support' do
+      let(:subject) { level1.first.parent }
+      let(:alt_subject) { described_class.create(level1.first.jid, alt_redis_pool) }
+    end
   end
 
   describe '#children' do
@@ -96,6 +121,10 @@ describe Sidekiq::Hierarchy::Job do
     it 'returns a list of immediate child Jobs' do
       expect(root.children).to eq level1
       expect(level1.first.children).to eq level2
+    end
+    it_behaves_like 'redis_pool support' do
+      let(:subject) { root.children.first }
+      let(:alt_subject) { described_class.create(root_jid, alt_redis_pool) }
     end
   end
 

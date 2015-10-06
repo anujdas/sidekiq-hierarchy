@@ -3,8 +3,8 @@ module Sidekiq
     class Workflow
       attr_reader :root
 
-      def initialize(root_jid)
-        @root = Sidekiq::Hierarchy::Job.new(root_jid)
+      def initialize(root_jid, redis_pool=nil)
+        @root = Sidekiq::Hierarchy::Job.new(root_jid, redis_pool)
       end
 
       # Walks the tree in DFS order (for optimal completion checking)

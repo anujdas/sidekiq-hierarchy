@@ -18,20 +18,21 @@ module Sidekiq
 
       attr_accessor :jid
 
-      def initialize(jid)
+      def initialize(jid, redis_pool=nil)
         self.jid = jid
+        @redis_pool = redis_pool
       end
 
       class << self
         alias_method :find, :new
 
-        def create(jid)
-          new(jid).tap { |job| job.enqueue! }  # initial status: enqueued
+        def create(jid, redis_pool=nil)
+          new(jid, redis_pool).tap { |job| job.enqueue! }  # initial status: enqueued
         end
       end
 
       def exists?
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.exists(redis_job_hkey)
         end
       end
@@ -42,14 +43,14 @@ module Sidekiq
 
       # Magic getter backed by redis hash
       def [](key)
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.hget(redis_job_hkey, key)
         end
       end
 
       # Magic setter backed by redis hash
       def []=(key, value)
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.multi do
             conn.hset(redis_job_hkey, key, value)
             conn.expire(redis_job_hkey, ONE_MONTH)
@@ -63,13 +64,13 @@ module Sidekiq
 
       def parent
         if parent_jid = self[PARENT_FIELD]
-          self.class.find(parent_jid)
+          self.class.find(parent_jid, @redis_pool)
         end
       end
 
       def children
-        Sidekiq.redis do |conn|
-          conn.lrange(redis_children_lkey, 0, -1).map { |jid| self.class.find(jid) }
+        redis do |conn|
+          conn.lrange(redis_children_lkey, 0, -1).map { |jid| self.class.find(jid, @redis_pool) }
         end
       end
 
@@ -99,7 +100,7 @@ module Sidekiq
 
       # Draws a new doubly-linked parent-child relationship in redis
       def add_child(child_job)
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.multi do
             # draw child->parent relationship
             conn.hset(child_job.redis_job_hkey, PARENT_FIELD, self.jid)
@@ -113,7 +114,7 @@ module Sidekiq
       end
 
       def workflow
-        Sidekiq::Hierarchy::Workflow.new(root.jid)
+        Sidekiq::Hierarchy::Workflow.new(root.jid, @redis_pool)
       end
 
 
@@ -164,6 +165,15 @@ module Sidekiq
       def redis_children_lkey
         "#{redis_job_hkey}:children"
       end
+
+      def redis(&blk)
+        if @redis_pool
+          @redis_pool.with(&blk)
+        else
+          Sidekiq.redis(&blk)
+        end
+      end
+      private :redis
     end
   end
 end
