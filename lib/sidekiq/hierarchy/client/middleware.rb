@@ -11,9 +11,12 @@ module Sidekiq
         #   queue - the named queue to use
         #   redis_pool - a redis-like connection/conn-pool
         # Must propagate return value upwards.
+        # May return false/nil to stop the job from going to redis.
         def call(worker_class, msg, queue, redis_pool)
-          # return false/nil to stop the job from going to redis
-          yield
+          yield.tap do |child_job|
+            # if block returns nil/false, job was cancelled before queueing by middleware
+            Sidekiq::Hierarchy.record_job_enqueued(child_job) if child_job
+          end
         end
       end
     end
