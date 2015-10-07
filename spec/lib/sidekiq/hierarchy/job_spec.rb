@@ -1,10 +1,11 @@
 require 'spec_helper'
 
 describe Sidekiq::Hierarchy::Job do
+  let(:job_info) { {'class' => 'HardWorker', 'args' => [1, 'foo']} }
   let(:root_jid) { '0' }
-  let(:root) { described_class.create(root_jid) }
-  let(:level1) { [described_class.create('1'), described_class.create('2')] }
-  let(:level2) { [described_class.create('3'), described_class.create('4')] }
+  let(:root) { described_class.create(root_jid, job_info) }
+  let(:level1) { [described_class.create('1', job_info), described_class.create('2', job_info)] }
+  let(:level2) { [described_class.create('3', job_info), described_class.create('4', job_info)] }
 
   # construct a workflow tree:
   #             root #0
@@ -44,15 +45,20 @@ describe Sidekiq::Hierarchy::Job do
 
   describe '.create' do
     let(:new_jid) { '000000000000' }
-    let(:new_node) { described_class.create(new_jid) }
-    it 'creates a new Job object and marks its status as enqueued' do
+    let(:new_node) { described_class.create(new_jid, job_info) }
+    it 'creates a new Job object' do
       expect(new_node).to be_a(described_class)
       expect(new_node.jid).to eq new_jid
+    end
+    it 'marks the new Job as enqueued' do
       expect(new_node).to be_enqueued
     end
+    it 'saves the job info to redis' do
+      expect(new_node.info).to eq job_info
+    end
     it_behaves_like 'redis_pool support' do
-      let(:subject) { described_class.create(root_jid) }
-      let(:alt_subject) { described_class.create(root_jid, alt_redis_pool) }
+      let(:subject) { described_class.create(root_jid, job_info) }
+      let(:alt_subject) { described_class.create(root_jid, job_info, alt_redis_pool) }
     end
   end
 
@@ -100,6 +106,12 @@ describe Sidekiq::Hierarchy::Job do
     end
   end
 
+  describe '#info' do
+    it 'retrieves the job info from redis' do
+      expect(root.info).to eq job_info
+    end
+  end
+
   describe '#parent' do
     it 'is nil for a root node' do
       expect(root.parent).to be_nil
@@ -110,7 +122,7 @@ describe Sidekiq::Hierarchy::Job do
     end
     it_behaves_like 'redis_pool support' do
       let(:subject) { level1.first.parent }
-      let(:alt_subject) { described_class.create(level1.first.jid, alt_redis_pool) }
+      let(:alt_subject) { described_class.create(level1.first.jid, job_info, alt_redis_pool) }
     end
   end
 
@@ -124,7 +136,7 @@ describe Sidekiq::Hierarchy::Job do
     end
     it_behaves_like 'redis_pool support' do
       let(:subject) { root.children.first }
-      let(:alt_subject) { described_class.create(root_jid, alt_redis_pool) }
+      let(:alt_subject) { described_class.create(root_jid, job_info, alt_redis_pool) }
     end
   end
 
@@ -171,7 +183,7 @@ describe Sidekiq::Hierarchy::Job do
   end
 
   describe '#add_child' do
-    let(:new_job) { described_class.create('000000000000') }
+    let(:new_job) { described_class.create('000000000000', job_info) }
 
     it "adds the child to the parent's children list" do
       expect { root.add_child(new_job) }.

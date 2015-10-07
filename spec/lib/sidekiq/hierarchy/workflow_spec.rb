@@ -1,9 +1,10 @@
 require 'spec_helper'
 
 describe Sidekiq::Hierarchy::Workflow do
-  let(:root) { Sidekiq::Hierarchy::Job.create('0') }
-  let(:level1) { [Sidekiq::Hierarchy::Job.create('1'), Sidekiq::Hierarchy::Job.create('2')] }
-  let(:level2) { [Sidekiq::Hierarchy::Job.create('3'), Sidekiq::Hierarchy::Job.create('4')] }
+  let(:job_info) { {'class' => 'HardWorker', 'args' => [1, 'foo']} }
+  let(:root) { Sidekiq::Hierarchy::Job.create('0', job_info) }
+  let(:level1) { [Sidekiq::Hierarchy::Job.create('1', job_info), Sidekiq::Hierarchy::Job.create('2', job_info)] }
+  let(:level2) { [Sidekiq::Hierarchy::Job.create('3', job_info), Sidekiq::Hierarchy::Job.create('4', job_info)] }
 
   # construct a workflow tree:
   #             root #0

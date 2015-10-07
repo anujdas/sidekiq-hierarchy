@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Sidekiq::Hierarchy::Client::Middleware do
   let(:parent_jid) { '0123456789ab' }
-  let(:parent_job) { Sidekiq::Hierarchy::Job.create(parent_jid) }
+  let(:parent_job) { Sidekiq::Hierarchy::Job.create(parent_jid, {}) }
 
   before { parent_job.complete! }
 

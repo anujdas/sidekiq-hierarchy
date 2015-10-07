@@ -2,6 +2,7 @@ module Sidekiq
   module Hierarchy
     class Job
       # Job hash keys
+      INFO_FIELD = 'i'.freeze
       PARENT_FIELD = 'p'.freeze
       STATUS_FIELD = 's'.freeze
 
@@ -27,8 +28,11 @@ module Sidekiq
       class << self
         alias_method :find, :new
 
-        def create(jid, redis_pool=nil)
-          new(jid, redis_pool).tap { |job| job.enqueue! }  # initial status: enqueued
+        def create(jid, job_hash, redis_pool=nil)
+          new(jid, redis_pool).tap do |job|
+            job[INFO_FIELD] = Sidekiq.dump_json(job_hash)
+            job.enqueue!  # initial status: enqueued
+          end
         end
       end
 
@@ -58,6 +62,10 @@ module Sidekiq
           end
         end
         value
+      end
+
+      def info
+        Sidekiq.load_json(self[INFO_FIELD])
       end
 
 
