@@ -12,3 +12,7 @@ Sidekiq.configure_server do |config|
     chain.prepend Sidekiq::Hierarchy::Client::Middleware
   end
 end
+
+Sidekiq::Testing.server_middleware do |chain|
+  chain.prepend Sidekiq::Hierarchy::Server::Middleware
+end
