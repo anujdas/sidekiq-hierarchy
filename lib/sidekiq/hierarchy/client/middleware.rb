@@ -13,9 +13,9 @@ module Sidekiq
         # Must propagate return value upwards.
         # May return false/nil to stop the job from going to redis.
         def call(worker_class, msg, queue, redis_pool)
-          yield.tap do |child_job|
+          yield.tap do |job|
             # if block returns nil/false, job was cancelled before queueing by middleware
-            Sidekiq::Hierarchy.record_job_enqueued(child_job) if child_job
+            Sidekiq::Hierarchy.record_job_enqueued(job) if job
           end
         end
       end
