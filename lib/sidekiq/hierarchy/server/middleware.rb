@@ -19,14 +19,30 @@ module Sidekiq
 
           ret
         rescue Exception => e
-          if msg['retry'] || exception_caused_by_shutdown?(e)
+          if exception_caused_by_shutdown?(e) || retries_remaining?(msg)
             # job will be pushed back onto queue during hard_shutdown or if retries are permitted
-            # for 'dead' jobs (retry exceeded), we'll need to check the DeadSet manually
             Sidekiq::Hierarchy.record_job_requeued
+          else
+            Sidekiq::Hierarchy.record_job_failed
           end
 
           raise
         end
+
+        def retries_remaining?(msg)
+          return false unless msg['retry']
+
+          retry_count = msg['retry_count'] || 0
+          max_retries = if msg['retry'].is_a?(Fixnum)
+                          msg['retry']
+                        else
+                          Sidekiq::Middleware::Server::RetryJobs::DEFAULT_MAX_RETRY_ATTEMPTS
+                        end
+
+          # this check requires prepending the middleware before sidekiq's builtin retry
+          retry_count < max_retries
+        end
+        private :retries_remaining?
 
         def exception_caused_by_shutdown?(e)
           e.instance_of?(Sidekiq::Shutdown) ||
