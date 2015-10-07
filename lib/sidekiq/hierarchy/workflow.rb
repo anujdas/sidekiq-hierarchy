@@ -20,11 +20,15 @@ module Sidekiq
       end
 
       def running?
-        jobs.any? { |job| job.enqueued? || job.running? }
+        jobs.any? { |job| job.enqueued? || job.requeued? || job.running? }
       end
 
       def complete?
         jobs.all?(&:complete?)
+      end
+
+      def failed?
+        jobs.any?(&:failed?)
       end
     end
   end

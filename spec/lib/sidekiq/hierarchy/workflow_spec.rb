@@ -38,6 +38,10 @@ describe Sidekiq::Hierarchy::Workflow do
       level2.first.enqueue!
       expect(workflow).to be_running
     end
+    it 'is true if any job was requeued' do
+      level2.first.requeue!
+      expect(workflow).to be_running
+    end
     it 'is true if any job is still running' do
       level2.first.run!
       expect(workflow).to be_running
@@ -60,8 +64,26 @@ describe Sidekiq::Hierarchy::Workflow do
       level2.first.run!
       expect(workflow).to_not be_complete
     end
+    it 'is false if any job failed' do
+      level2.first.fail!
+      expect(workflow).to_not be_complete
+    end
     it 'is true if all jobs are complete' do
       expect(workflow).to be_complete
+    end
+  end
+
+  describe '#failed?' do
+    before do
+      root.complete!
+      (level1 + level2).each(&:complete!)
+    end
+    it 'is true if any job failed' do
+      level2.first.fail!
+      expect(workflow).to be_failed
+    end
+    it 'is false if no job failed' do
+      expect(workflow).to_not be_failed
     end
   end
 end
