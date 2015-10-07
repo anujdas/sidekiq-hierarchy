@@ -28,6 +28,16 @@ describe Sidekiq::Hierarchy::Client::Middleware do
           expect(Sidekiq::Hierarchy::Job.find(job_id).parent).to eq parent_job
         end
       end
+
+      context 'within a workflow' do
+        before { Sidekiq::Hierarchy.current_workflow = parent_jid }
+        after  { Sidekiq::Hierarchy.current_workflow = nil }
+
+        it 'passes the workflow jid to the new job' do
+          TestWorker.perform_async
+          expect(TestWorker.jobs.first['workflow']).to eq parent_jid
+        end
+      end
     end
 
     context 'on job cancellation by a nested middleware' do

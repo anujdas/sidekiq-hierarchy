@@ -8,6 +8,16 @@ require 'sidekiq/hierarchy/client/middleware'
 module Sidekiq
   module Hierarchy
     class << self
+      # Sets the workflow root jid for the current fiber/worker
+      def current_workflow=(root_jid)
+        Thread.current[:workflow] = root_jid
+      end
+
+      # Retrieves jid for the current Sidekiq workflow root if previously set
+      def current_workflow
+        Thread.current[:workflow]
+      end
+
       # Sets the jid for the current fiber/worker
       def current_jid=(jid)
         Thread.current[:jid] = jid

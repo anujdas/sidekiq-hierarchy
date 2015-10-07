@@ -3,7 +3,32 @@ require 'spec_helper'
 class Sidekiq::Shutdown < Interrupt; end
 
 describe Sidekiq::Hierarchy::Server::Middleware do
+  before do
+    Sidekiq::Hierarchy.current_workflow = nil
+    Sidekiq::Hierarchy.current_jid = nil
+  end
+
   describe '#call' do
+    context 'on a job not marked as part of a workflow' do
+      it 'marks the job as the start of a new workflow' do
+        job_id = TestWorker.perform_async
+        TestWorker.drain
+        expect(Sidekiq::Hierarchy.current_workflow).to eq job_id
+      end
+    end
+
+    context 'on a job within a workflow' do
+      let(:root_jid) { '0123456789ab' }
+      before { Sidekiq::Hierarchy.current_workflow = root_jid }
+      it 'saves the workflow root jid' do
+        job_id = TestWorker.perform_async
+        TestWorker.drain
+
+        expect(Sidekiq::Hierarchy.current_workflow).to_not eq job_id
+        expect(Sidekiq::Hierarchy.current_workflow).to eq root_jid
+      end
+    end
+
     context 'on job start' do
       it 'updates workflow status on the current job' do
         job_id = TestWorker.perform_async

@@ -1,10 +1,31 @@
 require 'spec_helper'
 
 describe Sidekiq::Hierarchy do
-  before(:each) { Thread.current[:jid] = nil }
+  before(:each) do
+    Thread.current[:workflow] = nil
+    Thread.current[:jid] = nil
+  end
 
   let(:jid) { '0123456789ab' }
   let(:child_jid) { '02468ace0246' }
+
+  describe '.current_workflow=' do
+    it 'sets the thread-local workflow jid' do
+      expect(Thread.current[:workflow]).to be_nil
+      described_class.current_workflow = jid
+      expect(described_class.current_workflow).to eq jid
+    end
+  end
+
+  describe '.current_workflow' do
+    it 'fetches the thread-local workflow root jid' do
+      Thread.current[:workflow] = jid
+      expect(described_class.current_workflow).to eq jid
+    end
+    it 'returns nil if thread workflow jid is not set' do
+      expect(described_class.current_workflow).to be_nil
+    end
+  end
 
   describe '.current_jid=' do
     it 'sets the thread-local jid' do
