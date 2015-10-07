@@ -42,6 +42,11 @@ module Sidekiq
         # current_jid should always be set in this context, but...
         Sidekiq::Hierarchy::Job.find(current_jid).requeue! if current_jid
       end
+
+      def record_job_failed
+        # current_jid should always be set in this context, but...
+        Sidekiq::Hierarchy::Job.find(current_jid).fail! if current_jid
+      end
     end
   end
 end

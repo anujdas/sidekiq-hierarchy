@@ -89,4 +89,12 @@ describe Sidekiq::Hierarchy do
       expect(Sidekiq::Hierarchy::Job.find(jid)).to be_requeued
     end
   end
+
+  describe '.record_job_failed' do
+    before { described_class.current_jid = jid }
+    it 'sets the status for the current job to failed' do
+      described_class.record_job_failed
+      expect(Sidekiq::Hierarchy::Job.find(jid)).to be_failed
+    end
+  end
 end

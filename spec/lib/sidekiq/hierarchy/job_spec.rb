@@ -206,6 +206,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_running
       expect(root).to_not be_complete
       expect(root).to_not be_requeued
+      expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.enqueue!).to be_truthy
@@ -221,6 +222,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_enqueued
       expect(root).to_not be_complete
       expect(root).to_not be_requeued
+      expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.run!).to be_truthy
@@ -236,6 +238,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_requeued
+      expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.complete!).to be_truthy
@@ -243,7 +246,7 @@ describe Sidekiq::Hierarchy::Job do
     end
   end
 
-  describe '#requeued!' do
+  describe '#requeue!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to requeued' do
       expect(root.requeue!).to be_truthy
@@ -251,10 +254,27 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_complete
+      expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
       expect(new_job.requeue!).to be_truthy
       expect(new_job).to be_requeued
+    end
+  end
+
+  describe '#fail!' do
+    let(:new_job) { described_class.find('000000000000') }
+    it 'sets the job status to failed' do
+      expect(root.fail!).to be_truthy
+      expect(root).to be_failed
+      expect(root).to_not be_enqueued
+      expect(root).to_not be_running
+      expect(root).to_not be_complete
+      expect(root).to_not be_requeued
+    end
+    it 'operates correctly on an unpersisted job' do
+      expect(new_job.fail!).to be_truthy
+      expect(new_job).to be_failed
     end
   end
 end
