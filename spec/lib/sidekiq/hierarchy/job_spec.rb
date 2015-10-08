@@ -224,6 +224,11 @@ describe Sidekiq::Hierarchy::Job do
       expect(new_job.enqueue!).to be_truthy
       expect(new_job).to be_enqueued
     end
+    it 'sets the enqueued-at timestamp' do
+      allow(Time).to receive(:now).and_return(Time.at(0))
+      root.enqueue!
+      expect(root.enqueued_at).to eq Time.at(0)
+    end
   end
 
   describe '#run!' do
@@ -240,6 +245,11 @@ describe Sidekiq::Hierarchy::Job do
       expect(new_job.run!).to be_truthy
       expect(new_job).to be_running
     end
+    it 'sets the run-at timestamp' do
+      allow(Time).to receive(:now).and_return(Time.at(0))
+      root.run!
+      expect(root.run_at).to eq Time.at(0)
+    end
   end
 
   describe '#complete!' do
@@ -255,6 +265,12 @@ describe Sidekiq::Hierarchy::Job do
     it 'operates correctly on an unpersisted job' do
       expect(new_job.complete!).to be_truthy
       expect(new_job).to be_complete
+    end
+    it 'sets the completed-at timestamp' do
+      allow(Time).to receive(:now).and_return(Time.at(0))
+      root.complete!
+      expect(root.complete_at).to eq Time.at(0)
+      expect(root.failed_at).to be_nil
     end
   end
 
@@ -287,6 +303,12 @@ describe Sidekiq::Hierarchy::Job do
     it 'operates correctly on an unpersisted job' do
       expect(new_job.fail!).to be_truthy
       expect(new_job).to be_failed
+    end
+    it 'sets the failed-at timestamp' do
+      allow(Time).to receive(:now).and_return(Time.at(0))
+      root.fail!
+      expect(root.failed_at).to eq Time.at(0)
+      expect(root.complete_at).to be_nil
     end
   end
 end

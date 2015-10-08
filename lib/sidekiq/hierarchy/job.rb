@@ -5,6 +5,9 @@ module Sidekiq
       INFO_FIELD = 'i'.freeze
       PARENT_FIELD = 'p'.freeze
       STATUS_FIELD = 's'.freeze
+      ENQUEUED_AT_FIELD = 'e'.freeze
+      RUN_AT_FIELD = 'r'.freeze
+      COMPLETED_AT_FIELD = 'c'.freeze
 
       # Values for STATUS_FIELD
       STATUS_QUEUED = '0'.freeze
@@ -132,28 +135,49 @@ module Sidekiq
       # Status update: mark as enqueued (step 1)
       def enqueue!
         self[STATUS_FIELD] = STATUS_QUEUED
+        self[ENQUEUED_AT_FIELD] = Time.now.to_f.to_s
       end
 
       def enqueued?
         self[STATUS_FIELD] == STATUS_QUEUED
       end
 
+      def enqueued_at
+        if t = self[ENQUEUED_AT_FIELD]
+          Time.at(t.to_f)
+        end
+      end
+
       # Status update: mark as running (step 2)
       def run!
         self[STATUS_FIELD] = STATUS_RUNNING
+        self[RUN_AT_FIELD] = Time.now.to_f.to_s
       end
 
       def running?
         self[STATUS_FIELD] == STATUS_RUNNING
       end
 
+      def run_at
+        if t = self[RUN_AT_FIELD]
+          Time.at(t.to_f)
+        end
+      end
+
       # Status update: mark as complete (step 3)
       def complete!
         self[STATUS_FIELD] = STATUS_COMPLETE
+        self[COMPLETED_AT_FIELD] = Time.now.to_f.to_s
       end
 
       def complete?
         self[STATUS_FIELD] == STATUS_COMPLETE
+      end
+
+      def complete_at
+        if complete? && t = self[COMPLETED_AT_FIELD]
+          Time.at(t.to_f)
+        end
       end
 
       def requeue!
@@ -166,10 +190,17 @@ module Sidekiq
 
       def fail!
         self[STATUS_FIELD] = STATUS_FAILED
+        self[COMPLETED_AT_FIELD] = Time.now.to_f.to_s
       end
 
       def failed?
         self[STATUS_FIELD] == STATUS_FAILED
+      end
+
+      def failed_at
+        if failed? && t = self[COMPLETED_AT_FIELD]
+          Time.at(t.to_f)
+        end
       end
 
 
