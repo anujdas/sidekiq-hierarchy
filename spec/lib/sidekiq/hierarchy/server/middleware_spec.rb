@@ -3,17 +3,27 @@ require 'spec_helper'
 class Sidekiq::Shutdown < Interrupt; end
 
 describe Sidekiq::Hierarchy::Server::Middleware do
-  before do
+  after do  # eliminate side-effects
     Sidekiq::Hierarchy.current_workflow = nil
     Sidekiq::Hierarchy.current_jid = nil
   end
 
   describe '#call' do
     context 'on a job not marked as part of a workflow' do
-      it 'marks the job as the start of a new workflow' do
-        job_id = TestWorker.perform_async
-        TestWorker.drain
-        expect(Sidekiq::Hierarchy.current_workflow).to eq job_id
+      context 'with workflow tracking enabled' do
+        it 'marks the job as the start of a new workflow' do
+          job_id = TestWorker.perform_async
+          TestWorker.drain
+          expect(Sidekiq::Hierarchy.current_workflow).to eq job_id
+        end
+      end
+
+      context 'with workflow tracking disabled' do
+        it 'does nothing' do
+          job_id = UntrackedWorker.perform_async
+          UntrackedWorker.drain
+          expect(Sidekiq::Hierarchy.current_workflow).to be_nil
+        end
       end
     end
 

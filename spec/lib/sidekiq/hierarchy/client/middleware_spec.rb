@@ -27,6 +27,13 @@ describe Sidekiq::Hierarchy::Client::Middleware do
           job_id = TestWorker.perform_async
           expect(Sidekiq::Hierarchy::Job.find(job_id).parent).to eq parent_job
         end
+
+        context 'with workflow tracking disabled on the child job' do
+          it 'does not track the job' do
+            job_id = UntrackedWorker.perform_async
+            expect(Sidekiq::Hierarchy::Job.find(job_id).exists?).to be_falsey
+          end
+        end
       end
 
       context 'within a workflow' do
@@ -36,6 +43,13 @@ describe Sidekiq::Hierarchy::Client::Middleware do
         it 'passes the workflow jid to the new job' do
           TestWorker.perform_async
           expect(TestWorker.jobs.first['workflow']).to eq parent_jid
+        end
+
+        context 'with workflow tracking disabled on the child job' do
+          it 'tracks the job anyway' do
+            UntrackedWorker.perform_async
+            expect(UntrackedWorker.jobs.first['workflow']).to eq parent_jid
+          end
         end
       end
     end

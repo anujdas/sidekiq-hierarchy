@@ -8,6 +8,12 @@ require 'sidekiq/hierarchy/client/middleware'
 module Sidekiq
   module Hierarchy
     class << self
+      # Checks if tracking is enabled based on whether the workflow is known
+      # If disabled, all methods are no-ops
+      def enabled?
+        !!current_workflow  # without a workflow root, we can't do anything
+      end
+
       # Sets the workflow root jid for the current fiber/worker
       def current_workflow=(root_jid)
         Thread.current[:workflow] = root_jid
@@ -29,6 +35,7 @@ module Sidekiq
       end
 
       def record_job_enqueued(job, redis_pool=nil)
+        return unless !!job['workflow']
         if current_jid  # this is an intermediate job, having both parent and children
           current_job = Sidekiq::Hierarchy::Job.find(current_jid, redis_pool)
           child_job = Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
@@ -39,23 +46,23 @@ module Sidekiq
       end
 
       def record_job_running
-        # current_jid should always be set in this context, but...
-        Sidekiq::Hierarchy::Job.find(current_jid).run! if current_jid
+        return unless enabled? && current_jid
+        Sidekiq::Hierarchy::Job.find(current_jid).run!
       end
 
       def record_job_complete
-        # current_jid should always be set in this context, but...
-        Sidekiq::Hierarchy::Job.find(current_jid).complete! if current_jid
+        return unless enabled? && current_jid
+        Sidekiq::Hierarchy::Job.find(current_jid).complete!
       end
 
       def record_job_requeued
-        # current_jid should always be set in this context, but...
-        Sidekiq::Hierarchy::Job.find(current_jid).requeue! if current_jid
+        return unless enabled? && current_jid
+        Sidekiq::Hierarchy::Job.find(current_jid).requeue!
       end
 
       def record_job_failed
-        # current_jid should always be set in this context, but...
-        Sidekiq::Hierarchy::Job.find(current_jid).fail! if current_jid
+        return unless enabled? && current_jid
+        Sidekiq::Hierarchy::Job.find(current_jid).fail!
       end
     end
   end
