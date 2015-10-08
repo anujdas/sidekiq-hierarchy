@@ -19,6 +19,13 @@ describe Sidekiq::Hierarchy::Workflow do
 
   subject(:workflow) { described_class.new(root.jid) }
 
+  describe '#delete' do
+    it 'deletes the root node' do
+      expect(workflow.root).to receive(:delete)
+      workflow.delete
+    end
+  end
+
   describe '#jobs' do
     it 'returns a lazy Enumerator' do
       expect(workflow.jobs).to be_an Enumerator

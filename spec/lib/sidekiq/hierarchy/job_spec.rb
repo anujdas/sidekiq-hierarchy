@@ -62,11 +62,13 @@ describe Sidekiq::Hierarchy::Job do
     end
   end
 
-  describe '#==' do
-    let(:root_copy) { described_class.find(root_jid) }
-    it 'compares jids' do
-      expect(root).to_not eq level1.first
-      expect(root).to eq root_copy
+  describe '#delete' do
+    before { root.delete }
+    it 'recursively deletes the current job and all subjobs' do
+      expect(described_class.find(root_jid).exists?).to be_falsey
+      (level1 + level2).map(&:jid).each do |jid|
+        expect(described_class.find(jid).exists?).to be_falsey
+      end
     end
   end
 
@@ -76,6 +78,14 @@ describe Sidekiq::Hierarchy::Job do
     it 'tests if the job has been persisted' do
       expect(root.exists?).to be_truthy
       expect(new_node.exists?).to be_falsey
+    end
+  end
+
+  describe '#==' do
+    let(:root_copy) { described_class.find(root_jid) }
+    it 'compares jids' do
+      expect(root).to_not eq level1.first
+      expect(root).to eq root_copy
     end
   end
 

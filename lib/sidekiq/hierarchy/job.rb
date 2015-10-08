@@ -39,6 +39,11 @@ module Sidekiq
         end
       end
 
+      def delete
+        children.each(&:delete)
+        redis { |conn| conn.del(redis_children_lkey, redis_job_hkey) }
+      end
+
       def exists?
         redis do |conn|
           conn.exists(redis_job_hkey)

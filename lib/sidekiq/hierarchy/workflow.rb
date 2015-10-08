@@ -7,6 +7,10 @@ module Sidekiq
         @root = Sidekiq::Hierarchy::Job.new(root_jid, redis_pool)
       end
 
+      def delete
+        @root.delete
+      end
+
       # Walks the tree in DFS order (for optimal completion checking)
       # Returns an Enumerator; use #to_a to get an array instead
       def jobs
