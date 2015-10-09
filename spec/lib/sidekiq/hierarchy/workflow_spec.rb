@@ -94,4 +94,40 @@ describe Sidekiq::Hierarchy::Workflow do
       expect(workflow).to_not be_failed
     end
   end
+
+  describe '#enqueued_at' do
+    it 'fetches the workflow root enqueued time' do
+      expect(workflow.enqueued_at).to eq root.enqueued_at
+    end
+  end
+
+  describe '#run_at' do
+    it 'fetches the workflow root run time' do
+      expect(workflow.run_at).to eq root.run_at
+    end
+  end
+
+  describe '#complete_at' do
+    before do
+      root.complete!
+      level1.each(&:complete!)
+    end
+
+    context 'with some jobs incomplete' do
+      it 'returns nil' do
+        expect(workflow.complete_at).to be_nil
+      end
+    end
+
+    context 'with all jobs complete' do
+      let(:newest) { Time.now + 60*60 }
+      before do
+        level2.each(&:complete!)
+        root[Sidekiq::Hierarchy::Job::COMPLETED_AT_FIELD] = newest.to_f.to_s
+      end
+      it 'returns the most recent completion time' do
+        expect(workflow.complete_at.to_f).to eq newest.to_f
+      end
+    end
+  end
 end

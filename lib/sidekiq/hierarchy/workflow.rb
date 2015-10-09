@@ -8,13 +8,13 @@ module Sidekiq
       end
 
       def delete
-        @root.delete
+        root.delete
       end
 
       # Walks the tree in DFS order (for optimal completion checking)
       # Returns an Enumerator; use #to_a to get an array instead
       def jobs
-        to_visit = [@root]
+        to_visit = [root]
         Enumerator.new do |y|
           while node = to_visit.pop
             y << node  # sugar for yielding a value
@@ -33,6 +33,20 @@ module Sidekiq
 
       def failed?
         jobs.any?(&:failed?)
+      end
+
+      def enqueued_at
+        root.enqueued_at
+      end
+
+      def run_at
+        root.run_at
+      end
+
+      # Returns the time at which all jobs were complete;
+      # nil if any jobs are still incomplete
+      def complete_at
+        jobs.max_by { |j| j.complete_at || return }.complete_at
       end
     end
   end
