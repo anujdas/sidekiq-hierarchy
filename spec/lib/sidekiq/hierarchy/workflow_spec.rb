@@ -130,4 +130,16 @@ describe Sidekiq::Hierarchy::Workflow do
       end
     end
   end
+
+  describe '#as_json' do
+    it 'takes the hash of the root' do
+      expect(workflow.as_json).to eq root.as_json
+    end
+  end
+
+  describe '#to_s' do
+    it 'returns a unique workflow identifier based on the hash' do
+      expect(workflow.to_s).to eq Sidekiq.dump_json(workflow.as_json)
+    end
+  end
 end

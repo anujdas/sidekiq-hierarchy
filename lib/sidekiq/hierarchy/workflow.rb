@@ -23,6 +23,9 @@ module Sidekiq
         end
       end
 
+
+      ### Status
+
       def running?
         jobs.any? { |job| job.enqueued? || job.requeued? || job.running? }
       end
@@ -34,6 +37,9 @@ module Sidekiq
       def failed?
         jobs.any?(&:failed?)
       end
+
+
+      ### Calculated metrics
 
       def enqueued_at
         root.enqueued_at
@@ -47,6 +53,17 @@ module Sidekiq
       # nil if any jobs are still incomplete
       def complete_at
         jobs.max_by { |j| j.complete_at || return }.complete_at
+      end
+
+
+      ### Serialisation
+
+      def as_json(options={})
+        root.as_json(options)
+      end
+
+      def to_s
+        Sidekiq.dump_json(self.as_json)
       end
     end
   end

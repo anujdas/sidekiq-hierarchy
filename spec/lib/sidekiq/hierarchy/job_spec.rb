@@ -321,4 +321,45 @@ describe Sidekiq::Hierarchy::Job do
       expect(root.complete_at).to be_nil
     end
   end
+
+  describe '#as_json' do
+    let(:json) { job.as_json }
+
+    context 'for a childless job' do
+      let(:job) { level2.last }
+      it 'produces a hash containing the class and no children' do
+        expect(json[:k]).to eq job_info['class']
+        expect(json[:c]).to eq []
+      end
+    end
+
+    context 'for a job with children' do
+      let(:job) { level1.first }
+      it 'produces a hash of the subtree containing class and children' do
+        expect(json[:k]).to eq job_info['class']
+        expect(json[:c].length).to eq level2.length
+        expect(json[:c].map{|j| j[:k]}).to eq [job_info['class'], job_info['class']]
+      end
+    end
+
+    context 'for arbitrarily ordered children' do
+      let(:child1) { described_class.create('10', {'class' => 'a'}) }
+      let(:child2) { described_class.create('11', {'class' => 'b'}) }
+      let(:tree1) do
+        root = described_class.create('12', {'class' => 'c'})
+        root.add_child(child1)
+        root.add_child(child2)
+        root
+      end
+      let(:tree2) do
+        root = described_class.create('13', {'class' => 'c'})
+        root.add_child(child2)
+        root.add_child(child1)
+        root
+      end
+      it 'returns the same hash' do
+        expect(tree1.as_json).to eq tree2.as_json
+      end
+    end
+  end
 end

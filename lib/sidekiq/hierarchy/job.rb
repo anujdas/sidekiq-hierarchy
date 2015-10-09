@@ -209,6 +209,13 @@ module Sidekiq
       end
 
 
+      ### Serialisation
+
+      def as_json(options={})
+        {k: info['class'], c: children.sort_by {|c| c.info['class']}.map(&:as_json)}
+      end
+
+
       ### Redis backend
 
       def redis_job_hkey
