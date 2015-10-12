@@ -10,7 +10,7 @@ module Sidekiq
       COMPLETED_AT_FIELD = 'c'.freeze
 
       # Values for STATUS_FIELD
-      STATUS_QUEUED = '0'.freeze
+      STATUS_ENQUEUED = '0'.freeze
       STATUS_RUNNING = '1'.freeze
       STATUS_COMPLETE = '2'.freeze
       STATUS_REQUEUED = '3'.freeze
@@ -137,14 +137,47 @@ module Sidekiq
 
       ### Status get/set
 
+      def status
+        case self[STATUS_FIELD]
+        when STATUS_ENQUEUED
+          :enqueued
+        when STATUS_RUNNING
+          :running
+        when STATUS_COMPLETE
+          :complete
+        when STATUS_REQUEUED
+          :requeued
+        when STATUS_FAILED
+          :failed
+        else
+          :unknown
+        end
+      end
+
+      def update_status(new_status)
+        case new_status
+        when :enqueued
+          s_val, t_field = STATUS_ENQUEUED, ENQUEUED_AT_FIELD
+        when :running
+          s_val, t_field = STATUS_RUNNING, RUN_AT_FIELD
+        when :complete
+          s_val, t_field = STATUS_COMPLETE, COMPLETED_AT_FIELD
+        when :requeued
+          s_val, t_field = STATUS_REQUEUED, nil
+        when :failed
+          s_val, t_field = STATUS_FAILED, COMPLETED_AT_FIELD
+        end
+        self[STATUS_FIELD] = s_val
+        self[t_field] = Time.now.to_f.to_s if t_field
+      end
+
       # Status update: mark as enqueued (step 1)
       def enqueue!
-        self[STATUS_FIELD] = STATUS_QUEUED
-        self[ENQUEUED_AT_FIELD] = Time.now.to_f.to_s
+        update_status :enqueued
       end
 
       def enqueued?
-        self[STATUS_FIELD] == STATUS_QUEUED
+        status == :enqueued
       end
 
       def enqueued_at
@@ -155,12 +188,11 @@ module Sidekiq
 
       # Status update: mark as running (step 2)
       def run!
-        self[STATUS_FIELD] = STATUS_RUNNING
-        self[RUN_AT_FIELD] = Time.now.to_f.to_s
+        update_status :running
       end
 
       def running?
-        self[STATUS_FIELD] == STATUS_RUNNING
+        status == :running
       end
 
       def run_at
@@ -171,12 +203,11 @@ module Sidekiq
 
       # Status update: mark as complete (step 3)
       def complete!
-        self[STATUS_FIELD] = STATUS_COMPLETE
-        self[COMPLETED_AT_FIELD] = Time.now.to_f.to_s
+        update_status :complete
       end
 
       def complete?
-        self[STATUS_FIELD] == STATUS_COMPLETE
+        status == :complete
       end
 
       def complete_at
@@ -186,20 +217,19 @@ module Sidekiq
       end
 
       def requeue!
-        self[STATUS_FIELD] = STATUS_REQUEUED
+        update_status :requeued
       end
 
       def requeued?
-        self[STATUS_FIELD] == STATUS_REQUEUED
+        status == :requeued
       end
 
       def fail!
-        self[STATUS_FIELD] = STATUS_FAILED
-        self[COMPLETED_AT_FIELD] = Time.now.to_f.to_s
+        update_status :failed
       end
 
       def failed?
-        self[STATUS_FIELD] == STATUS_FAILED
+        status == :failed
       end
 
       def failed_at

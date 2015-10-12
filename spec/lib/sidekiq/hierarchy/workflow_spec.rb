@@ -74,61 +74,64 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
-  describe '#running?' do
+  describe '#status' do
     before do
       root.complete!
       (level1 + level2).each(&:complete!)
     end
-    it 'is true if any job is still enqueued' do
-      level2.first.enqueue!
-      expect(workflow).to be_running
+
+    context 'if any job failed' do
+      before { level2.first.fail! }
+      its(:status) { is_expected.to be :failed }
     end
-    it 'is true if any job was requeued' do
-      level2.first.requeue!
-      expect(workflow).to be_running
+
+    context 'if any job is still enqueued' do
+      before { level2.first.enqueue! }
+      its(:status) { is_expected.to be :running }
     end
-    it 'is true if any job is still running' do
-      level2.first.run!
-      expect(workflow).to be_running
+
+    context 'if any job is requeued' do
+      before { level2.first.requeue! }
+      its(:status) { is_expected.to be :running }
     end
-    it 'is false if all jobs are complete' do
+
+    context 'if any job is running' do
+      before { level2.first.run! }
+      its(:status) { is_expected.to be :running }
+    end
+
+    context 'if all jobs are complete' do
+      its(:status) { is_expected.to be :complete }
+    end
+  end
+
+  describe '#running?' do
+    it 'checks if the status is :running' do
+      allow(workflow).to receive(:status).and_return(:complete)
       expect(workflow).to_not be_running
+
+      allow(workflow).to receive(:status).and_return(:running)
+      expect(workflow).to be_running
     end
   end
 
   describe '#complete?' do
-    before do
-      root.complete!
-      (level1 + level2).each(&:complete!)
-    end
-    it 'is false if any job is still enqueued' do
-      level2.first.enqueue!
+    it 'checks if the status is :complete' do
+      allow(workflow).to receive(:status).and_return(:running)
       expect(workflow).to_not be_complete
-    end
-    it 'is false if any job is still running' do
-      level2.first.run!
-      expect(workflow).to_not be_complete
-    end
-    it 'is false if any job failed' do
-      level2.first.fail!
-      expect(workflow).to_not be_complete
-    end
-    it 'is true if all jobs are complete' do
+
+      allow(workflow).to receive(:status).and_return(:complete)
       expect(workflow).to be_complete
     end
   end
 
   describe '#failed?' do
-    before do
-      root.complete!
-      (level1 + level2).each(&:complete!)
-    end
-    it 'is true if any job failed' do
-      level2.first.fail!
-      expect(workflow).to be_failed
-    end
-    it 'is false if no job failed' do
+    it 'checks if the status is :failed' do
+      allow(workflow).to receive(:status).and_return(:complete)
       expect(workflow).to_not be_failed
+
+      allow(workflow).to receive(:status).and_return(:failed)
+      expect(workflow).to be_failed
     end
   end
 

@@ -34,16 +34,33 @@ module Sidekiq
 
       ### Status
 
+      def status
+        statuses = jobs.map do |job|
+          status = job.status
+          if status == :failed
+            return :failed  # early exit
+          else
+            status
+          end
+        end
+
+        if statuses.all? { |s| s == :complete }
+          return :complete
+        else
+          return :running
+        end
+      end
+
       def running?
-        jobs.any? { |job| job.enqueued? || job.requeued? || job.running? }
+        status == :running
       end
 
       def complete?
-        jobs.all?(&:complete?)
+        status == :complete
       end
 
       def failed?
-        jobs.any?(&:failed?)
+        status == :failed
       end
 
 

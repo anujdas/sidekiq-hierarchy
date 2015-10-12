@@ -223,7 +223,7 @@ describe Sidekiq::Hierarchy::Job do
   describe '#enqueue!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to enqueued' do
-      expect(root.enqueue!).to be_truthy
+      root.enqueue!
       expect(root).to be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_complete
@@ -231,7 +231,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
-      expect(new_job.enqueue!).to be_truthy
+      new_job.enqueue!
       expect(new_job).to be_enqueued
     end
     it 'sets the enqueued-at timestamp' do
@@ -244,7 +244,7 @@ describe Sidekiq::Hierarchy::Job do
   describe '#run!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to running' do
-      expect(root.run!).to be_truthy
+      root.run!
       expect(root).to be_running
       expect(root).to_not be_enqueued
       expect(root).to_not be_complete
@@ -252,7 +252,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
-      expect(new_job.run!).to be_truthy
+      new_job.run!
       expect(new_job).to be_running
     end
     it 'sets the run-at timestamp' do
@@ -287,7 +287,7 @@ describe Sidekiq::Hierarchy::Job do
   describe '#requeue!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to requeued' do
-      expect(root.requeue!).to be_truthy
+      root.requeue!
       expect(root).to be_requeued
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
@@ -295,7 +295,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
-      expect(new_job.requeue!).to be_truthy
+      new_job.requeue!
       expect(new_job).to be_requeued
     end
   end
@@ -303,7 +303,7 @@ describe Sidekiq::Hierarchy::Job do
   describe '#fail!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to failed' do
-      expect(root.fail!).to be_truthy
+      root.fail!
       expect(root).to be_failed
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
@@ -311,7 +311,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_requeued
     end
     it 'operates correctly on an unpersisted job' do
-      expect(new_job.fail!).to be_truthy
+      new_job.fail!
       expect(new_job).to be_failed
     end
     it 'sets the failed-at timestamp' do
@@ -319,6 +319,30 @@ describe Sidekiq::Hierarchy::Job do
       root.fail!
       expect(root.failed_at).to eq Time.at(0)
       expect(root.complete_at).to be_nil
+    end
+  end
+
+  describe '#status' do
+    let(:job) { described_class.find('000000000000') }
+    it 'reflects the current status as a symbol' do
+      job.enqueue!
+      expect(job.status).to eq :enqueued
+
+      job.run!
+      expect(job.status).to eq :running
+
+      job.complete!
+      expect(job.status).to eq :complete
+
+      job.requeue!
+      expect(job.status).to eq :requeued
+
+      job.fail!
+      expect(job.status).to eq :failed
+    end
+    it 'returns unknown if the status does not match a known value' do
+      job[described_class::STATUS_FIELD] = nil
+      expect(job.status).to eq :unknown
     end
   end
 
