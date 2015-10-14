@@ -3,8 +3,8 @@ module Sidekiq
     class Workflow
       attr_reader :root
 
-      def initialize(root_jid, redis_pool=nil)
-        @root = Sidekiq::Hierarchy::Job.new(root_jid, redis_pool)
+      def initialize(root)
+        @root = root
       end
 
       def delete

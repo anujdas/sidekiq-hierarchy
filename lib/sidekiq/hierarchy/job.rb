@@ -131,7 +131,7 @@ module Sidekiq
       end
 
       def workflow
-        Sidekiq::Hierarchy::Workflow.new(root.jid, @redis_pool)
+        Sidekiq::Hierarchy::Workflow.new(root)
       end
 
 
