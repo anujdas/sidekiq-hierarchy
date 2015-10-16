@@ -13,7 +13,14 @@ module Sidekiq
         alias_method :find, :new
       end
 
-      delegate [:jid, :[], :[]=, :delete] => :@root
+      delegate [:jid, :[], :[]=] => :@root
+
+      def delete
+        if workflow_set = WorkflowSet.for_status(status)
+          workflow_set.delete(self)
+        end
+        root.delete
+      end
 
       def ==(other_workflow)
         self.jid == other_workflow.jid
