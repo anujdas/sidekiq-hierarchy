@@ -48,6 +48,15 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
+  describe '#==' do
+    let(:copy) { described_class.find(root) }
+    let(:noncopy) { described_class.find(level1.first) }
+    it 'compares jids' do
+      expect(workflow).to eq copy
+      expect(workflow).to_not eq noncopy
+    end
+  end
+
   describe '#jobs' do
     it 'returns a lazy Enumerator' do
       expect(workflow.jobs).to be_an Enumerator

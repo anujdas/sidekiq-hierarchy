@@ -15,6 +15,10 @@ module Sidekiq
 
       delegate [:[], :[]=, :delete] => :@root
 
+      def ==(other_workflow)
+        self.root.jid == other_workflow.root.jid
+      end
+
       # Walks the tree in DFS order (for optimal completion checking)
       # Returns an Enumerator; use #to_a to get an array instead
       def jobs
