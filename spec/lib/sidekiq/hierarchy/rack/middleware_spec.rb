@@ -12,7 +12,8 @@ describe Sidekiq::Hierarchy::Rack::Middleware do
 
   let(:app) do
     lambda do |_env|
-      body = {workflow: Sidekiq::Hierarchy.current_workflow, jid: Sidekiq::Hierarchy.current_jid}
+      workflow_jid = Sidekiq::Hierarchy.current_workflow.jid if Sidekiq::Hierarchy.current_workflow
+      body = {workflow: workflow_jid, jid: Sidekiq::Hierarchy.current_jid}
       [200, {'Content-Type' => 'application/json'}, [body.to_json]]
     end
   end

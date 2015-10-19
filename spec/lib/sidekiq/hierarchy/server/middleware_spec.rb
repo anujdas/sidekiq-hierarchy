@@ -14,7 +14,7 @@ describe Sidekiq::Hierarchy::Server::Middleware do
         it 'marks the job as the start of a new workflow' do
           job_id = TestWorker.perform_async
           TestWorker.drain
-          expect(Sidekiq::Hierarchy.current_workflow).to eq job_id
+          expect(Sidekiq::Hierarchy.current_workflow.jid).to eq job_id
         end
       end
 
@@ -29,13 +29,16 @@ describe Sidekiq::Hierarchy::Server::Middleware do
 
     context 'on a job within a workflow' do
       let(:root_jid) { '0123456789ab' }
-      before { Sidekiq::Hierarchy.current_workflow = root_jid }
+      let(:root_job) { Sidekiq::Hierarchy::Job.find(root_jid) }
+      let(:workflow) { Sidekiq::Hierarchy::Workflow.find(root_job) }
+      before { Sidekiq::Hierarchy.current_workflow = workflow }
       it 'saves the workflow root jid' do
         job_id = TestWorker.perform_async
         TestWorker.drain
 
-        expect(Sidekiq::Hierarchy.current_workflow).to_not eq job_id
-        expect(Sidekiq::Hierarchy.current_workflow).to eq root_jid
+        expect(Sidekiq::Hierarchy.current_workflow.jid).to_not eq job_id
+        expect(Sidekiq::Hierarchy.current_workflow.jid).to eq root_jid
+        expect(Sidekiq::Hierarchy.current_workflow).to eq workflow
       end
     end
 

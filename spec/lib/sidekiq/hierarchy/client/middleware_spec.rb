@@ -37,7 +37,7 @@ describe Sidekiq::Hierarchy::Client::Middleware do
       end
 
       context 'within a workflow' do
-        before { Sidekiq::Hierarchy.current_workflow = parent_jid }
+        before { Sidekiq::Hierarchy.current_workflow = Sidekiq::Hierarchy::Workflow.find(parent_job) }
         after  { Sidekiq::Hierarchy.current_workflow = nil }
 
         it 'passes the workflow jid to the new job' do

@@ -47,7 +47,7 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
     context 'with current jid and workflow set' do
       before do
         Sidekiq::Hierarchy.current_jid = jid
-        Sidekiq::Hierarchy.current_workflow = workflow
+        Sidekiq::Hierarchy.current_workflow = Sidekiq::Hierarchy::Workflow.find(Sidekiq::Hierarchy::Job.find(workflow))
       end
       it 'passes the jid and workflow via header' do
         expect(response['jid']).to eq jid

@@ -13,10 +13,10 @@ module Sidekiq
         alias_method :find, :new
       end
 
-      delegate [:[], :[]=, :delete] => :@root
+      delegate [:jid, :[], :[]=, :delete] => :@root
 
       def ==(other_workflow)
-        self.root.jid == other_workflow.root.jid
+        self.jid == other_workflow.jid
       end
 
       # Walks the tree in DFS order (for optimal completion checking)

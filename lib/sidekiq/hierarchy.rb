@@ -11,15 +11,15 @@ module Sidekiq
       # Checks if tracking is enabled based on whether the workflow is known
       # If disabled, all methods are no-ops
       def enabled?
-        !!current_workflow  # without a workflow root, we can't do anything
+        !!current_workflow  # without a workflow, we can't do anything
       end
 
-      # Sets the workflow root jid for the current fiber/worker
-      def current_workflow=(root_jid)
-        Thread.current[:workflow] = root_jid
+      # Sets the workflow object for the current fiber/worker
+      def current_workflow=(workflow)
+        Thread.current[:workflow] = workflow
       end
 
-      # Retrieves jid for the current Sidekiq workflow root if previously set
+      # Retrieves the current Sidekiq workflow if previously set
       def current_workflow
         Thread.current[:workflow]
       end

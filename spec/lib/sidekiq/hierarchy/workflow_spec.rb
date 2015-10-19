@@ -27,6 +27,12 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
+  describe '#jid' do
+    it 'returns the root job jid' do
+      expect(workflow.jid).to eq workflow.root.jid
+    end
+  end
+
   describe '#[]' do
     it 'retrieves attrs from the root job' do
       workflow.root[:attr] = 'value'

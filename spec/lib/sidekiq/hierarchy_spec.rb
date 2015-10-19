@@ -8,6 +8,8 @@ describe Sidekiq::Hierarchy do
 
   let(:jid) { '0123456789ab' }
   let(:child_jid) { '02468ace0246' }
+  let(:job) { Sidekiq::Hierarchy::Job.find(jid) }
+  let(:workflow) { Sidekiq::Hierarchy::Workflow.find(job) }
 
   describe '.enabled?' do
     it 'checks whether the workflow is known' do
@@ -18,17 +20,17 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.current_workflow=' do
-    it 'sets the thread-local workflow jid' do
+    it 'sets the thread-local workflow' do
       expect(Thread.current[:workflow]).to be_nil
-      described_class.current_workflow = jid
-      expect(described_class.current_workflow).to eq jid
+      described_class.current_workflow = workflow
+      expect(described_class.current_workflow).to eq workflow
     end
   end
 
   describe '.current_workflow' do
-    it 'fetches the thread-local workflow root jid' do
-      Thread.current[:workflow] = jid
-      expect(described_class.current_workflow).to eq jid
+    it 'fetches the thread-local workflow' do
+      Thread.current[:workflow] = workflow
+      expect(described_class.current_workflow).to eq workflow
     end
     it 'returns nil if thread workflow jid is not set' do
       expect(described_class.current_workflow).to be_nil
