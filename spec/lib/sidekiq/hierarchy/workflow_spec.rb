@@ -17,7 +17,29 @@ describe Sidekiq::Hierarchy::Workflow do
     level2.each { |child| level1.first.add_child(child) }
   end
 
-  subject(:workflow) { described_class.new(root) }
+  subject(:workflow) { described_class.find(root) }
+
+  describe '.find' do
+    let(:existing_workflow) { described_class.find(root) }
+    it 'instantiates a Workflow object for the given jid' do
+      expect(existing_workflow).to be_a(described_class)
+      expect(existing_workflow.root).to eq root
+    end
+  end
+
+  describe '#[]' do
+    it 'retrieves attrs from the root job' do
+      workflow.root[:attr] = 'value'
+      expect(workflow[:attr]).to eq 'value'
+    end
+  end
+
+  describe '#[]=' do
+    it 'sets attrs on the root job' do
+      workflow[:attr] = 'value'
+      expect(workflow.root[:attr]).to eq 'value'
+    end
+  end
 
   describe '#delete' do
     it 'deletes the root node' do

@@ -1,15 +1,19 @@
 module Sidekiq
   module Hierarchy
     class Workflow
+      extend Forwardable
+
       attr_reader :root
 
       def initialize(root)
         @root = root
       end
 
-      def delete
-        root.delete
+      class << self
+        alias_method :find, :new
       end
+
+      delegate [:[], :[]=, :delete] => :@root
 
       # Walks the tree in DFS order (for optimal completion checking)
       # Returns an Enumerator; use #to_a to get an array instead
