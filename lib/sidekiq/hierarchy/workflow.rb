@@ -35,19 +35,25 @@ module Sidekiq
       ### Status
 
       def status
-        statuses = jobs.map do |job|
-          status = job.status
-          if status == :failed
-            return :failed  # early exit
-          else
-            status
-          end
-        end
-
-        if statuses.all? { |s| s == :complete }
-          return :complete
+        case self[Job::WORKFLOW_STATUS_FIELD]
+        when Job::STATUS_RUNNING
+          :running
+        when Job::STATUS_COMPLETE
+          :complete
+        when Job::STATUS_FAILED
+          :failed
         else
-          return :running
+          :unknown
+        end
+      end
+
+      def update_status(job_status)
+        if [:enqueued, :running, :requeued].include?(job_status)
+          self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_RUNNING
+        elsif job_status == :failed
+          self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_FAILED
+        elsif job_status == :complete && jobs.all?(&:complete?)
+          self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_COMPLETE
         end
       end
 

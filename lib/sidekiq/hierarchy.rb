@@ -36,12 +36,16 @@ module Sidekiq
 
       def record_job_enqueued(job, redis_pool=nil)
         return unless !!job['workflow']
-        if current_jid  # this is an intermediate job, having both parent and children
+        if current_jid.nil?
+          # this is a root-level job, i.e., start of a workflow
+          Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
+        elsif current_jid == job['jid']
+          # this is a job requeuing itself, ignore it
+        else
+          # this is an intermediate job, having both parent and children
           current_job = Sidekiq::Hierarchy::Job.find(current_jid, redis_pool)
           child_job = Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
           current_job.add_child(child_job)
-        else  # this is a root-level job, i.e., start of a workflow
-          Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
         end
       end
 

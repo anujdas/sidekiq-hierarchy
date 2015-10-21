@@ -265,7 +265,7 @@ describe Sidekiq::Hierarchy::Job do
   describe '#complete!' do
     let(:new_job) { described_class.find('000000000000') }
     it 'sets the job status to complete' do
-      expect(root.complete!).to be_truthy
+      root.complete!
       expect(root).to be_complete
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
@@ -273,7 +273,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_failed
     end
     it 'operates correctly on an unpersisted job' do
-      expect(new_job.complete!).to be_truthy
+      new_job.complete!
       expect(new_job).to be_complete
     end
     it 'sets the completed-at timestamp' do

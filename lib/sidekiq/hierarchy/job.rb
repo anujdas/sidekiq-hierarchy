@@ -5,6 +5,7 @@ module Sidekiq
       INFO_FIELD = 'i'.freeze
       PARENT_FIELD = 'p'.freeze
       STATUS_FIELD = 's'.freeze
+      WORKFLOW_STATUS_FIELD = 'w'.freeze
       ENQUEUED_AT_FIELD = 'e'.freeze
       RUN_AT_FIELD = 'r'.freeze
       COMPLETED_AT_FIELD = 'c'.freeze
@@ -100,11 +101,10 @@ module Sidekiq
       end
 
       # Walks up the workflow tree and returns its root job node
-      # Caches on first run, as the root is immutable
       # Warning: recursive!
       def root
         # This could be done in a single Lua script server-side...
-        @root ||= (self.root? ? self : self.parent.root)
+        self.root? ? self : self.parent.root
       end
 
       # Walks down the workflow tree and returns all its leaf nodes
@@ -131,7 +131,7 @@ module Sidekiq
       end
 
       def workflow
-        Sidekiq::Hierarchy::Workflow.new(root)
+        Workflow.find(root)
       end
 
 
@@ -167,8 +167,11 @@ module Sidekiq
         when :failed
           s_val, t_field = STATUS_FAILED, COMPLETED_AT_FIELD
         end
+
         self[STATUS_FIELD] = s_val
         self[t_field] = Time.now.to_f.to_s if t_field
+
+        self.workflow.update_status(new_status)
       end
 
       # Status update: mark as enqueued (step 1)
