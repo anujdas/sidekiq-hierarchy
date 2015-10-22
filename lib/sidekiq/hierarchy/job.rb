@@ -22,10 +22,10 @@ module Sidekiq
 
       ### Class definition
 
-      attr_accessor :jid
+      attr_reader :jid
 
       def initialize(jid, redis_pool=nil)
-        self.jid = jid
+        @jid = jid
         @redis_pool = redis_pool
       end
 
