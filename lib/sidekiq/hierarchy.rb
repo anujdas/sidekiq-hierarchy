@@ -4,10 +4,14 @@ require 'sidekiq/hierarchy/job'
 require 'sidekiq/hierarchy/workflow'
 require 'sidekiq/hierarchy/server/middleware'
 require 'sidekiq/hierarchy/client/middleware'
+require 'sidekiq/hierarchy/callback_registry'
 
 module Sidekiq
   module Hierarchy
     class << self
+
+      ### Per-thread context tracking
+
       # Checks if tracking is enabled based on whether the workflow is known
       # If disabled, all methods are no-ops
       def enabled?
@@ -33,6 +37,9 @@ module Sidekiq
       def current_jid
         Thread.current[:jid]
       end
+
+
+      ### Workflow execution updates
 
       def record_job_enqueued(job, redis_pool=nil)
         return unless !!job['workflow']
@@ -68,6 +75,21 @@ module Sidekiq
         return unless enabled? && current_jid
         Sidekiq::Hierarchy::Job.find(current_jid).fail!
       end
+
+
+      ### Callbacks
+
+      attr_accessor :callback_registry
+
+      def subscribe(event, callback)
+        @callback_registry.subscribe(event, callback)
+      end
+
+      def publish(event, *args)
+        @callback_registry.publish(event, *args)
+      end
     end
+
+    self.callback_registry = CallbackRegistry.new
   end
 end

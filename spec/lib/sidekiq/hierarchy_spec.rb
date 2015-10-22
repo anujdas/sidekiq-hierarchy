@@ -187,4 +187,22 @@ describe Sidekiq::Hierarchy do
       end
     end
   end
+
+  describe '.subscribe' do
+    let(:event) { :event }
+    let(:callback) { ->(){} }
+    it 'adds the callback to the registry' do
+      expect(described_class.callback_registry).to receive(:subscribe).with(event, callback)
+      described_class.subscribe(event, callback)
+    end
+  end
+
+  describe '.publish' do
+    let(:event) { :event }
+    let(:args) { [1,2,3] }
+    it 'broadcasts the event to the registry' do
+      expect(described_class.callback_registry).to receive(:publish).with(event, *args)
+      described_class.publish(event, *args)
+    end
+  end
 end
