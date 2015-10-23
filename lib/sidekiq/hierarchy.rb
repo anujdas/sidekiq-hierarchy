@@ -2,9 +2,10 @@ require 'sidekiq'
 require 'sidekiq/hierarchy/version'
 require 'sidekiq/hierarchy/job'
 require 'sidekiq/hierarchy/workflow'
+require 'sidekiq/hierarchy/callback_registry'
+require 'sidekiq/hierarchy/notifications'
 require 'sidekiq/hierarchy/server/middleware'
 require 'sidekiq/hierarchy/client/middleware'
-require 'sidekiq/hierarchy/callback_registry'
 
 module Sidekiq
   module Hierarchy

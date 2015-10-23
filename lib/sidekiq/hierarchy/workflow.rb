@@ -50,10 +50,14 @@ module Sidekiq
       def update_status(job_status)
         if [:enqueued, :running, :requeued].include?(job_status)
           self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_RUNNING
+          Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, jid, :running)
         elsif job_status == :failed
+          new_status = :failed
           self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_FAILED
+          Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, jid, :failed)
         elsif job_status == :complete && jobs.all?(&:complete?)
           self[Job::WORKFLOW_STATUS_FIELD] = Job::STATUS_COMPLETE
+          Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, jid, :complete)
         end
       end
 

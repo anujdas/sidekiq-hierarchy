@@ -170,6 +170,7 @@ module Sidekiq
 
         self[STATUS_FIELD] = s_val
         self[t_field] = Time.now.to_f.to_s if t_field
+        Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, jid, new_status)
 
         self.workflow.update_status(new_status)
       end
