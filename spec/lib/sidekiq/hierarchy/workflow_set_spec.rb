@@ -43,24 +43,26 @@ shared_examples_for 'workflow set' do
     end
   end
 
+  describe '#contains?' do
+    it 'tests whether the set includes the workflow' do
+      expect(workflow_set.contains?(workflow)).to be_falsey
+      workflow_set.add(workflow)
+      expect(workflow_set.contains?(workflow)).to be_truthy
+    end
+  end
+
   describe '#delete' do
-    it 'removes the workflow from the set and deletes all of its jobs' do
+    it 'removes the workflow from the set' do
       workflow_set.add(workflow)
       workflow_set.delete(workflow)
 
       expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
-      [root, level1, level2].flatten.each do |job|
-        expect(job.exists?).to be_falsey
-      end
     end
 
     it 'does nothing if the workflow is not in the set' do
       workflow_set.delete(workflow)
 
       expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
-      [root, level1, level2].flatten.each do |job|
-        expect(job.exists?).to be_truthy
-      end
     end
   end
 

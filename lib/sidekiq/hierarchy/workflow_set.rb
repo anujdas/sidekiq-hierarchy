@@ -28,12 +28,15 @@ module Sidekiq
       end
 
       def add(workflow)
-        Sidekiq.redis { |conn| conn.zadd(redis_zkey, Time.now.to_f, workflow.root.jid) }
+        Sidekiq.redis { |conn| conn.zadd(redis_zkey, Time.now.to_f, workflow.jid) }
+      end
+
+      def contains?(workflow)
+        !!Sidekiq.redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
       end
 
       def delete(workflow)
-        found = Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.root.jid) }
-        workflow.delete if found
+        Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
       end
 
       def each
