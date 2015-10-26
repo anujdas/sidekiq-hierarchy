@@ -16,6 +16,7 @@ shared_examples_for 'workflow set' do
   let(:workflow) { Sidekiq::Hierarchy::Workflow.find(root) }
 
   describe '#size' do
+    before { Sidekiq.redis { |c| c.del(zset) } }
     it 'returns the size of the set' do
       expect { Sidekiq.redis { |c| c.zadd(zset, 0, 0) } }
         .to change { workflow_set.size }
@@ -45,9 +46,10 @@ shared_examples_for 'workflow set' do
 
   describe '#contains?' do
     it 'tests whether the set includes the workflow' do
-      expect(workflow_set.contains?(workflow)).to be_falsey
       workflow_set.add(workflow)
       expect(workflow_set.contains?(workflow)).to be_truthy
+      workflow_set.delete(workflow)
+      expect(workflow_set.contains?(workflow)).to be_falsey
     end
   end
 

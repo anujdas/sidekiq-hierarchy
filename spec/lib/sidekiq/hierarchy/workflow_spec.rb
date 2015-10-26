@@ -75,33 +75,69 @@ describe Sidekiq::Hierarchy::Workflow do
   end
 
   describe '#status' do
+    it 'reflects the current status as a symbol' do
+      workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_RUNNING
+      expect(workflow.status).to eq :running
+
+      workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_COMPLETE
+      expect(workflow.status).to eq :complete
+
+      workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_FAILED
+      expect(workflow.status).to eq :failed
+    end
+    it 'returns unknown if the status does not match a known value' do
+      workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = nil
+      expect(workflow.status).to eq :unknown
+    end
+  end
+
+  describe '#update_status' do
     before do
-      root.complete!
       (level1 + level2).each(&:complete!)
+      root.requeue!
     end
 
-    context 'if any job failed' do
-      before { level2.first.fail! }
-      its(:status) { is_expected.to be :failed }
+    context 'when a job is enqueued' do
+      before { workflow.update_status(:enqueued) }
+      it 'sets the status to running' do
+        expect(workflow.status).to eq :running
+      end
     end
 
-    context 'if any job is still enqueued' do
-      before { level2.first.enqueue! }
-      its(:status) { is_expected.to be :running }
+    context 'when a job is running' do
+      before { workflow.update_status(:running) }
+      it 'sets the status to running' do
+        expect(workflow.status).to eq :running
+      end
     end
 
-    context 'if any job is requeued' do
-      before { level2.first.requeue! }
-      its(:status) { is_expected.to be :running }
+    context 'when a job is requeued' do
+      before { workflow.update_status(:requeued) }
+      it 'sets the status to running' do
+        expect(workflow.status).to eq :running
+      end
     end
 
-    context 'if any job is running' do
-      before { level2.first.run! }
-      its(:status) { is_expected.to be :running }
+    context 'when a job fails' do
+      before { workflow.update_status(:failed) }
+      it 'sets the status to failed' do
+        expect(workflow.status).to eq :failed
+      end
     end
 
-    context 'if all jobs are complete' do
-      its(:status) { is_expected.to be :complete }
+    context 'when a job completes' do
+      context 'and some jobs are still incomplete' do
+        it 'does not change the workflow status' do
+          expect { workflow.update_status(:complete) }.to_not change { workflow.status }
+        end
+      end
+      context 'and all other jobs are completed' do
+        before { root[Sidekiq::Hierarchy::Job::STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_COMPLETE }
+        it 'sets the status to failed' do
+          workflow.update_status(:complete)
+          expect(workflow.status).to eq :complete
+        end
+      end
     end
   end
 

@@ -236,8 +236,8 @@ describe Sidekiq::Hierarchy::Job do
     end
     it 'sets the enqueued-at timestamp' do
       allow(Time).to receive(:now).and_return(Time.at(0))
-      root.enqueue!
-      expect(root.enqueued_at).to eq Time.at(0)
+      new_job.enqueue!
+      expect(new_job.enqueued_at).to eq Time.at(0)
     end
   end
 

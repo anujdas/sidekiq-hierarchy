@@ -1,10 +1,14 @@
 require 'sidekiq'
 require 'sidekiq/hierarchy/version'
+
 require 'sidekiq/hierarchy/job'
 require 'sidekiq/hierarchy/workflow'
 require 'sidekiq/hierarchy/workflow_set'
+
 require 'sidekiq/hierarchy/callback_registry'
 require 'sidekiq/hierarchy/notifications'
+require 'sidekiq/hierarchy/observers'
+
 require 'sidekiq/hierarchy/server/middleware'
 require 'sidekiq/hierarchy/client/middleware'
 
@@ -84,14 +88,16 @@ module Sidekiq
       attr_accessor :callback_registry
 
       def subscribe(event, callback)
-        @callback_registry.subscribe(event, callback)
+        callback_registry.subscribe(event, callback)
       end
 
       def publish(event, *args)
-        @callback_registry.publish(event, *args)
+        callback_registry.publish(event, *args)
       end
     end
 
     self.callback_registry = CallbackRegistry.new
+    Observers::JobUpdate.new.register(callback_registry)
+    Observers::WorkflowUpdate.new.register(callback_registry)
   end
 end

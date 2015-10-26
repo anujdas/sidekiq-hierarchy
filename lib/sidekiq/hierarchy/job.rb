@@ -155,6 +155,9 @@ module Sidekiq
       end
 
       def update_status(new_status)
+        old_status = status
+        return if new_status == old_status
+
         case new_status
         when :enqueued
           s_val, t_field = STATUS_ENQUEUED, ENQUEUED_AT_FIELD
@@ -170,9 +173,8 @@ module Sidekiq
 
         self[STATUS_FIELD] = s_val
         self[t_field] = Time.now.to_f.to_s if t_field
-        Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, jid, new_status)
 
-        self.workflow.update_status(new_status)
+        Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, jid, new_status, old_status)
       end
 
       # Status update: mark as enqueued (step 1)
