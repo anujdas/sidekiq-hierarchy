@@ -15,15 +15,17 @@ module Sidekiq
 
       delegate [:jid, :[], :[]=] => :@root
 
-      def delete
-        if workflow_set = WorkflowSet.for_status(status)
-          workflow_set.delete(self)
-        end
-        root.delete
-      end
-
       def ==(other_workflow)
         self.jid == other_workflow.jid
+      end
+
+      def workflow_set
+        WorkflowSet.for_status(status)
+      end
+
+      def delete
+        workflow_set.delete(self) if workflow_set
+        root.delete
       end
 
       # Walks the tree in DFS order (for optimal completion checking)
@@ -56,7 +58,7 @@ module Sidekiq
 
       def update_status(from_job_status)
         old_status = status
-        return if [:failed, :complete].include?(old_status)
+        return if [:failed, :complete].include?(old_status)  # these states are final
 
         if [:enqueued, :running, :requeued].include?(from_job_status)
           new_status, s_val = :running, Job::STATUS_RUNNING
@@ -66,7 +68,7 @@ module Sidekiq
           new_status, s_val = :complete, Job::STATUS_COMPLETE
         end
 
-        return if !new_status || new_status == old_status
+        return if !new_status || new_status == old_status  # don't publish null updates
         self[Job::WORKFLOW_STATUS_FIELD] = s_val
 
         Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, jid, new_status, old_status)
@@ -98,7 +100,13 @@ module Sidekiq
       # Returns the time at which all jobs were complete;
       # nil if any jobs are still incomplete
       def complete_at
-        jobs.max_by { |j| j.complete_at || return }.complete_at
+        jobs.map(&:complete_at).max if complete?
+      end
+
+      # Returns the earliest time at which a job failed;
+      # nil if none did
+      def failed_at
+        jobs.map(&:failed_at).compact.min if failed?
       end
 
 

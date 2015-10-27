@@ -47,19 +47,40 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
-  describe '#delete' do
-    it 'deletes the root node' do
-      expect(workflow.root).to receive(:delete)
-      workflow.delete
-    end
-  end
-
   describe '#==' do
     let(:copy) { described_class.find(root) }
     let(:noncopy) { described_class.find(level1.first) }
     it 'compares jids' do
       expect(workflow).to eq copy
       expect(workflow).to_not eq noncopy
+    end
+  end
+
+  describe '#workflow_set' do
+    it 'returns the RunningSet for a running workflow' do
+      allow(workflow).to receive(:status).and_return(:running)
+      expect(workflow.workflow_set).to be_an_instance_of Sidekiq::Hierarchy::RunningSet
+    end
+    it 'returns the CompleteSet for a complete workflow' do
+      allow(workflow).to receive(:status).and_return(:complete)
+      expect(workflow.workflow_set).to be_an_instance_of Sidekiq::Hierarchy::CompleteSet
+    end
+    it 'returns the FailedSet for a failed workflow' do
+      allow(workflow).to receive(:status).and_return(:failed)
+      expect(workflow.workflow_set).to be_an_instance_of Sidekiq::Hierarchy::FailedSet
+    end
+  end
+
+  describe '#delete' do
+    let(:workflow_set) { double('Sidekiq::Hierarchy::WorkflowSet', delete: nil) }
+    before { allow(workflow).to receive(:workflow_set).and_return(workflow_set) }
+    it 'deletes the root node' do
+      expect(workflow.root).to receive(:delete)
+      workflow.delete
+    end
+    it 'removes the workflow from its status set' do
+      expect(workflow_set).to receive(:delete).with(workflow)
+      workflow.delete
     end
   end
 
@@ -199,10 +220,25 @@ describe Sidekiq::Hierarchy::Workflow do
       let(:newest) { Time.now + 60*60 }
       before do
         level2.each(&:complete!)
-        root[Sidekiq::Hierarchy::Job::COMPLETED_AT_FIELD] = newest.to_f.to_s
+        root[Sidekiq::Hierarchy::Job::COMPLETED_AT_FIELD] = newest.to_f.to_s  # avoid triggering callback
       end
       it 'returns the most recent completion time' do
         expect(workflow.complete_at.to_f).to eq newest.to_f
+      end
+    end
+  end
+
+  describe '#failed_at' do
+    context 'with no failed jobs' do
+      it 'returns nil' do
+        expect(workflow.failed_at).to be_nil
+      end
+    end
+
+    context 'with failed jobs' do
+      before { level1.each(&:fail!) }
+      it 'returns the earliest failure time' do
+        expect(workflow.failed_at.to_f).to eq level1.map(&:failed_at).min.to_f
       end
     end
   end
