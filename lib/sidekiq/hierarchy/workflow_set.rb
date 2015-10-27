@@ -48,7 +48,7 @@ module Sidekiq
             conn.zrevrangebyscore(redis_zkey, "(#{last_max_score}", '-inf', limit: [0, PAGE_SIZE], with_scores: true)
           end
           break if elements.empty?
-          elements.each { |jid, _| yield Workflow.find(Job.find(jid)) }
+          elements.each { |jid, _| yield Workflow.find_by_jid(jid) }
           last_max_score = elements.last[1]  # timestamp of last element
         end
       end
@@ -90,7 +90,7 @@ module Sidekiq
           end
         end
 
-        (jids + more_jids).each { |jid| Job.find(jid).delete }
+        (jids + more_jids).each { |jid| Workflow.find_by_jid(jid).delete }
       end
     end
 

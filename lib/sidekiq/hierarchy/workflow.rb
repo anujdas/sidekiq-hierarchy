@@ -11,6 +11,10 @@ module Sidekiq
 
       class << self
         alias_method :find, :new
+
+        def find_by_jid(root_jid)
+          find(Job.find(root_jid))
+        end
       end
 
       delegate [:jid, :[], :[]=] => :@root

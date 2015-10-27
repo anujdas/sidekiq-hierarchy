@@ -21,6 +21,14 @@ describe Sidekiq::Hierarchy::Workflow do
 
   describe '.find' do
     let(:existing_workflow) { described_class.find(root) }
+    it 'instantiates a Workflow object for the given job' do
+      expect(existing_workflow).to be_a(described_class)
+      expect(existing_workflow.root).to eq root
+    end
+  end
+
+  describe '.find_by_jid' do
+    let(:existing_workflow) { described_class.find_by_jid(root.jid) }
     it 'instantiates a Workflow object for the given jid' do
       expect(existing_workflow).to be_a(described_class)
       expect(existing_workflow.root).to eq root

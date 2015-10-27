@@ -7,7 +7,7 @@ module Sidekiq
         end
 
         def call(root_jid, status, old_status)
-          workflow = Workflow.find(Job.find(root_jid))
+          workflow = Workflow.find_by_jid(root_jid)
           from_set = WorkflowSet.for_status(old_status)
           to_set = WorkflowSet.for_status(status)
 
