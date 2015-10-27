@@ -49,12 +49,12 @@ module Sidekiq
           end
           break if elements.empty?
           elements.each { |jid, _| yield Workflow.find(Job.find(jid)) }
-          last_max_score = elements.last[0]  # timestamp of last element
+          last_max_score = elements.last[1]  # timestamp of last element
         end
       end
 
       def redis_zkey
-        "hierarchy:#{@status}"
+        "hierarchy:set:#{@status}"
       end
     end
 

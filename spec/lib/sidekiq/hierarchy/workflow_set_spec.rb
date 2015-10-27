@@ -187,18 +187,18 @@ end
 
 describe Sidekiq::Hierarchy::RunningSet do
   it_behaves_like 'workflow set' do
-    let(:zset) { 'hierarchy:running' }
+    let(:zset) { 'hierarchy:set:running' }
   end
 end
 
 describe Sidekiq::Hierarchy::CompleteSet do
   it_behaves_like 'pruning workflow set' do
-    let(:zset) { 'hierarchy:complete' }
+    let(:zset) { 'hierarchy:set:complete' }
   end
 end
 
 describe Sidekiq::Hierarchy::FailedSet do
   it_behaves_like 'pruning workflow set' do
-    let(:zset) { 'hierarchy:failed' }
+    let(:zset) { 'hierarchy:set:failed' }
   end
 end
