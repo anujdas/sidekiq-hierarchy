@@ -7,11 +7,11 @@ Gem::Specification.new do |spec|
   spec.name          = "sidekiq-hierarchy"
   spec.version       = Sidekiq::Hierarchy::VERSION
   spec.authors       = ["Anuj Das"]
-  spec.email         = ["anuj.das@lookout.com"]
+  spec.email         = ["anujdas@gmail.com"]
 
   spec.summary       = %q{A set of sidekiq middlewares to track workflows consisting of multiple levels of sidekiq jobs}
   spec.description   = %q{A set of sidekiq middlewares to track workflows consisting of multiple levels of sidekiq jobs}
-  spec.homepage      = "TODO"
+  spec.homepage      = 'https://www.github.com/anujdas/sidekiq-hierarchy'
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
