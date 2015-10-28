@@ -12,7 +12,7 @@ module Sidekiq
           to_set = WorkflowSet.for_status(status)
 
           # if workflow status is unknown, then... ?
-          from_set.delete(workflow) if from_set
+          from_set.remove(workflow) if from_set
           to_set.add(workflow) if to_set
         end
       end

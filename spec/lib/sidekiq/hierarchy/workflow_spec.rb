@@ -80,14 +80,14 @@ describe Sidekiq::Hierarchy::Workflow do
   end
 
   describe '#delete' do
-    let(:workflow_set) { double('Sidekiq::Hierarchy::WorkflowSet', delete: nil) }
+    let(:workflow_set) { double('Sidekiq::Hierarchy::WorkflowSet', remove: nil) }
     before { allow(workflow).to receive(:workflow_set).and_return(workflow_set) }
     it 'deletes the root node' do
       expect(workflow.root).to receive(:delete)
       workflow.delete
     end
     it 'removes the workflow from its status set' do
-      expect(workflow_set).to receive(:delete).with(workflow)
+      expect(workflow_set).to receive(:remove).with(workflow)
       workflow.delete
     end
   end

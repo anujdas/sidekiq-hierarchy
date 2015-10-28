@@ -28,7 +28,7 @@ module Sidekiq
       end
 
       def delete
-        workflow_set.delete(self) if workflow_set
+        workflow_set.remove(self) if workflow_set
         root.delete
       end
 

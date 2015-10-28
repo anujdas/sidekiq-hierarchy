@@ -48,23 +48,30 @@ shared_examples_for 'workflow set' do
     it 'tests whether the set includes the workflow' do
       workflow_set.add(workflow)
       expect(workflow_set.contains?(workflow)).to be_truthy
-      workflow_set.delete(workflow)
+      workflow_set.remove(workflow)
       expect(workflow_set.contains?(workflow)).to be_falsey
     end
   end
 
-  describe '#delete' do
+  describe '#remove' do
     it 'removes the workflow from the set' do
       workflow_set.add(workflow)
-      workflow_set.delete(workflow)
+      workflow_set.remove(workflow)
 
       expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
     end
 
     it 'does nothing if the workflow is not in the set' do
-      workflow_set.delete(workflow)
+      workflow_set.remove(workflow)
 
       expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+    end
+  end
+
+  describe '#remove_all' do
+    it 'clears the entire set' do
+      workflow_set.remove_all
+      expect(workflow_set.size).to eq 0
     end
   end
 
@@ -78,7 +85,7 @@ shared_examples_for 'workflow set' do
       expect(workflow_set.each.map(&:root)).to eq workflows.reverse.map(&:root)
     end
     it 'tolerates set modification during iteration' do
-      list = workflow_set.each.map { |result| workflows.each { |w| workflow_set.delete(w) }; result }
+      list = workflow_set.each.map { |result| workflows.each { |w| workflow_set.remove(w) }; result }
       expect(list.map(&:root)).to eq workflows.reverse.map(&:root)
     end
   end

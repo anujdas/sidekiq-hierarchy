@@ -35,8 +35,12 @@ module Sidekiq
         !!Sidekiq.redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
       end
 
-      def delete(workflow)
+      def remove(workflow)
         Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
+      end
+
+      def remove_all
+        Sidekiq.redis { |conn| conn.del(redis_zkey) }
       end
 
       def each
