@@ -17,7 +17,7 @@ module Sidekiq
         end
       end
 
-      delegate [:jid, :[], :[]=] => :@root
+      delegate [:jid, :[], :[]=, :exists?] => :@root
 
       def ==(other_workflow)
         self.jid == other_workflow.jid

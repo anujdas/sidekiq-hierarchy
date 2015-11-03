@@ -55,6 +55,19 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
+  describe '#exists?' do
+    let(:new_jid) { '000000000000' }
+    let(:new_workflow) { described_class.find_by_jid(new_jid) }
+    it 'tests if the root job has been persisted' do
+      expect(workflow.exists?).to be_truthy
+      expect(new_workflow.exists?).to be_falsey
+    end
+    it 'sets attrs on the root job' do
+      workflow[:attr] = 'value'
+      expect(workflow.root[:attr]).to eq 'value'
+    end
+  end
+
   describe '#==' do
     let(:copy) { described_class.find(root) }
     let(:noncopy) { described_class.find(level1.first) }
