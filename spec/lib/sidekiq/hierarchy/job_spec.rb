@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Sidekiq::Hierarchy::Job do
-  let(:job_info) { {'class' => 'HardWorker', 'args' => [1, 'foo']} }
+  let(:job_info) { {'class' => 'HardWorker', 'queue' => 'default'} }
   let(:root_jid) { '0' }
   let(:root) { described_class.create(root_jid, job_info) }
   let(:level1) { [described_class.create('1', job_info), described_class.create('2', job_info)] }
@@ -46,16 +46,36 @@ describe Sidekiq::Hierarchy::Job do
   describe '.create' do
     let(:new_jid) { '000000000000' }
     let(:new_node) { described_class.create(new_jid, job_info) }
+
     it 'creates a new Job object' do
       expect(new_node).to be_a(described_class)
       expect(new_node.jid).to eq new_jid
     end
+
     it 'marks the new Job as enqueued' do
       expect(new_node).to be_enqueued
     end
-    it 'saves the job info to redis' do
-      expect(new_node.info).to eq job_info
+
+    context 'saving job info' do
+      let(:expanded_job_info) { job_info.merge({'more_stuff' => ['abc', '123']}) }
+      let(:job_info_with_contraints) { expanded_job_info.merge({'workflow_keys' => 'more_stuff'}) }
+
+      let(:node_with_expanded_info) { described_class.create('1', expanded_job_info) }
+      let(:node_with_constraints) { described_class.create('2', job_info_with_contraints) }
+
+      it 'saves job info to redis' do
+        expect(new_node[Sidekiq::Hierarchy::Job::INFO_FIELD]).to_not be_nil
+      end
+
+      it 'filters job info to a few default keys' do
+        expect(node_with_expanded_info.info).to eq job_info
+      end
+
+      it 'permits additional job info via sidekiq option :workflow_keys' do
+        expect(node_with_constraints.info).to eq expanded_job_info
+      end
     end
+
     it_behaves_like 'redis_pool support' do
       let(:subject) { described_class.create(root_jid, job_info) }
       let(:alt_subject) { described_class.create(root_jid, job_info, alt_redis_pool) }

@@ -18,6 +18,7 @@ module Sidekiq
       STATUS_FAILED = '4'.freeze
 
       ONE_MONTH = 60 * 60 * 24 * 30  # key expiration
+      INFO_KEYS = ['class'.freeze, 'queue'.freeze]  # default keys to keep
 
 
       ### Class definition
@@ -34,10 +35,18 @@ module Sidekiq
 
         def create(jid, job_hash, redis_pool=nil)
           new(jid, redis_pool).tap do |job|
-            job[INFO_FIELD] = Sidekiq.dump_json(job_hash)
+            job[INFO_FIELD] = Sidekiq.dump_json(filtered_job_hash(job_hash))
             job.enqueue!  # initial status: enqueued
           end
         end
+
+        # saves INFO_KEYS as well as whatever keys are specified
+        # in the worker's sidekiq options under :workflow_keys
+        def filtered_job_hash(job_hash)
+          keys_to_keep = (INFO_KEYS + Array(job_hash['workflow_keys'])).uniq
+          job_hash.select { |k, _| keys_to_keep.include?(k) }
+        end
+        private :filtered_job_hash
       end
 
       def delete
@@ -240,6 +249,12 @@ module Sidekiq
 
       def failed_at
         if failed? && t = self[COMPLETED_AT_FIELD]
+          Time.at(t.to_f)
+        end
+      end
+
+      def finished_at
+        if t = self[COMPLETED_AT_FIELD]
           Time.at(t.to_f)
         end
       end
