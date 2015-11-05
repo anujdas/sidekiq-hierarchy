@@ -68,13 +68,6 @@ shared_examples_for 'workflow set' do
     end
   end
 
-  describe '#remove_all' do
-    it 'clears the entire set' do
-      workflow_set.remove_all
-      expect(workflow_set.size).to eq 0
-    end
-  end
-
   describe '#each' do
     let(:workflows) do
       10.times.map { |i| Sidekiq::Hierarchy::Job.create(i.to_s, job_info) }

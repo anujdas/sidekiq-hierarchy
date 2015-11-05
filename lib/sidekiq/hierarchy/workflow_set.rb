@@ -35,12 +35,10 @@ module Sidekiq
         !!Sidekiq.redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
       end
 
+      # XXX: this ONLY removes the workflow from the set; it MUST
+      # be deleted (using Workflow#delete) in order to reclaim space!
       def remove(workflow)
         Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
-      end
-
-      def remove_all
-        Sidekiq.redis { |conn| conn.del(redis_zkey) }
       end
 
       def each
