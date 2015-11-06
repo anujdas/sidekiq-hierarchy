@@ -61,7 +61,8 @@ module Sidekiq
       end
 
       def ==(other_job)
-        self.jid == other_job.jid
+        other_job.instance_of?(self.class) &&
+          self.jid == other_job.jid
       end
 
       # Magic getter backed by redis hash

@@ -20,7 +20,8 @@ module Sidekiq
       delegate [:jid, :[], :[]=, :exists?] => :@root
 
       def ==(other_workflow)
-        self.jid == other_workflow.jid
+        other_workflow.instance_of?(self.class) &&
+          self.jid == other_workflow.jid
       end
 
       def workflow_set
