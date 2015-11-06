@@ -1,0 +1,8 @@
+<%# input: local var 'bars', in the format [[status, width], ...]; local var 'active', true == moving bar %>
+<div class="progress<%= ' progress-striped active' if !!locals[:active] %>">
+  <% bars.each do |status, width| %>
+    <div class="progress-bar progress-bar-<%= bootstrap_status(status) %>" style="width: <%= width * 100 %>%">
+      <%= status.to_s.capitalize %>
+    </div>
+  <% end %>
+</div>

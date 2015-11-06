@@ -1,0 +1,13 @@
+<a href="<%= workflow_url(@workflow) %>">
+  <h3>Workflow <%= @workflow.jid %></h3>
+</a>
+<h4>Job <%= @job.jid %></h4>
+
+<%= erb sidekiq_hierarchy_template(:_job_progress_bar), locals: {job: @job} %>
+
+<%= erb sidekiq_hierarchy_template(:_job_table), locals: {jobs: [@job]} %>
+
+<h4>Job Tree</h4>
+<%= erb sidekiq_hierarchy_template(:_workflow_tree), locals: {root: @job} %>
+
+<%= @job.info %>

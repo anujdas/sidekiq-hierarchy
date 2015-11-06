@@ -1,0 +1,3 @@
+<h3><%= @status.to_s.capitalize %> Workflows</h3>
+
+<%= erb sidekiq_hierarchy_template(:_workflow_table), locals: {workflows: @workflows} %>

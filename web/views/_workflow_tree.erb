@@ -1,0 +1,82 @@
+<style>
+  /* Lifted from http://www.cssscript.com/demo/minimalist-tree-view-in-pure-css */
+  /* Alternative styling: http://www.goocode.net/css/153-pure-css-to-create-family-tree.html */
+
+  ul.workflow_tree  {
+    padding-left: 0px;
+  }
+
+  .workflow_tree li {
+    list-style-type: none;
+    margin: 10px;
+    position: relative;
+  }
+
+  .workflow_tree li::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: -20px;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0 0 0 0px;
+    width: 20px;
+    height: 15px;
+  }
+
+  .workflow_tree li::after {
+    position: absolute;
+    content: "";
+    top: 8px;
+    left: -20px;
+    border-left: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+    border-radius: 0px 0 0 0;
+    width: 20px;
+    height: 100%;
+  }
+
+  .workflow_tree li:last-child::after  {
+    display: none;
+  }
+
+  .workflow_tree li:last-child:before{
+    border-radius: 0 0 0 5px;
+  }
+
+  ul.workflow_tree > li:first-child::before {
+    display: none;
+  }
+
+  ul.workflow_tree > li:first-child::after {
+    border-radius: 5px 0 0 0;
+  }
+
+  .workflow_tree li a {
+    border-radius: 5px;
+    padding: 2px 5px;
+  }
+
+  .workflow_tree li a:hover, .workflow_tree li a:focus {
+    background: #ccc;
+    color: #000;
+    text-decoration: none;
+  }
+
+  .workflow_tree li a:hover+ul li a, .workflow_tree li a:focus+ul li a {
+    color: #000;
+  }
+
+  .workflow_tree li a:hover+ul li::after, .workflow_tree li a:focus+ul li::after,
+  .workflow_tree li a:hover+ul li::before, .workflow_tree li a:focus+ul li::before 
+  .workflow_tree li a:hover+ul::before, .workflow_tree li a:focus+ul::before 
+  .workflow_tree li a:hover+ul ul::before, .workflow_tree li a:focus+ul ul::before{
+    border-color: #000;
+  }
+</style>
+
+<ul class="workflow_tree">
+  <% unless root.root? %><ul><% end %>
+    <%= erb sidekiq_hierarchy_template(:_workflow_tree_node), locals: {job: root} %>
+  <% unless root.root? %></ul><% end %>
+</ul>

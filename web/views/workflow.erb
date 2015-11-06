@@ -1,0 +1,41 @@
+<h3>Workflow <%= @workflow.jid %></h3>
+
+<%= erb sidekiq_hierarchy_template(:_workflow_progress_bar), locals: {workflow: @workflow} %>
+
+<div class="table_container">
+  <table class="table table-condensed table-white">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Enqueued at</th>
+        <th>Run at</th>
+        <th>Completed at</th>
+        <th>Failed at</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><%= @workflow.status %></td>
+        <td><%= @workflow.enqueued_at %></td>
+        <td><%= @workflow.run_at %></td>
+        <td><%= @workflow.complete_at %></td>
+        <td><%= @workflow.failed_at %></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h4>Job Tree</h4>
+<%= erb sidekiq_hierarchy_template(:_workflow_tree), locals: {root: @workflow.root} %>
+
+<h4>Jobs</h4>
+<%= erb sidekiq_hierarchy_template(:_job_table), locals: {jobs: @workflow.jobs} %>
+
+<form action="<%= workflow_url(@workflow) %>" method="post">
+  <div style="margin:0;padding:0">
+    <input name="_method" type="hidden" value="delete" />
+    <input name="authenticity_token" type="hidden" value="<%= session[:csrf] %>">
+  </div>
+  <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This is irreversible')">Delete</button>
+</form>

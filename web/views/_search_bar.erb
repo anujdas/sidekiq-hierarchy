@@ -1,0 +1,17 @@
+<div class="row col-sm-12">
+  <form class="form-inline col-sm-6" action="<%= workflow_url %>" method="get">
+    <div class="form-group">
+      <label for="workflow_jid" class="sr-only">Workflow ID</label>
+      <input type="search" class="form-control" name="workflow_jid" placeholder="Enter Workflow ID" size="24">
+    </div>
+    <button type="submit" class="btn btn-default">Search workflows</button>
+  </form>
+
+  <form class="form-inline col-sm-6" action="<%= job_url %>" method="get">
+    <div class="form-group">
+      <label for="jid" class="sr-only">Job ID</label>
+      <input type="search" class="form-control" name="jid" placeholder="Enter Job ID" size="24">
+    </div>
+    <button type="submit" class="btn btn-default">Search jobs</button>
+  </form>
+</div>

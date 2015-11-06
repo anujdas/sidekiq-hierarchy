@@ -1,0 +1,7 @@
+<form action="<%= workflow_set_url(status) %>" method="post">
+  <div style="margin:0;padding:0">
+    <input name="_method" type="hidden" value="delete" />
+    <input name="authenticity_token" type="hidden" value="<%= session[:csrf] %>">
+  </div>
+  <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This is irreversible')">Clear Set</button>
+</form>

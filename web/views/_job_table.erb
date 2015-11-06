@@ -1,0 +1,35 @@
+<table class="table table-hover table-bordered table-striped table-white">
+  <thead>
+    <tr>
+      <th>JID</th>
+      <th>Queue</th>
+      <th>Status</th>
+      <th>Enqueued at</th>
+      <th>Run at</th>
+      <th>Completed at</th>
+      <th>Failed at</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% jobs.each do |job| %>
+      <tr>
+        <td>
+          <a href="<%= job_url(job) %>">
+            <%= job.jid %>
+          </a>
+        </td>
+        <td><%= job.info['queue'] %></td>
+        <td>
+          <span class="label label-<%= bootstrap_status(job.status) %>">
+            <%= job.status %>
+          </span>
+        </td>
+        <td><%= job.enqueued_at %></td>
+        <td><%= job.run_at %></td>
+        <td><%= job.complete_at %></td>
+        <td><%= job.failed_at %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

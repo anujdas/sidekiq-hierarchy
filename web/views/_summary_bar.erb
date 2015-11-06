@@ -1,0 +1,30 @@
+<div class="col-sm-12 summary_bar">
+  <ul class="list-unstyled summary row">
+    <li class="busy col-sm-4" style="width: 33%">
+      <a href="<%= workflow_set_url(:running) %>">
+        <span class="count">
+          <%= Sidekiq::Hierarchy::RunningSet.new.size %>
+        </span>
+        <span class="desc">Running</span>
+      </a>
+    </li>
+
+    <li class="processed col-sm-4" style="width: 33%">
+      <a href="<%= workflow_set_url(:complete) %>">
+        <span class="count">
+          <%= Sidekiq::Hierarchy::CompleteSet.new.size %>
+        </span>
+        <span class="desc">Complete</span>
+      </a>
+    </li>
+
+    <li class="dead col-sm-4" style="width: 33%">
+      <a href="<%= workflow_set_url(:failed) %>">
+        <span class="count">
+          <%= Sidekiq::Hierarchy::FailedSet.new.size %>
+        </span>
+        <span class="desc">Failed</span>
+      </a>
+    </li>
+  </ul>
+</div>
