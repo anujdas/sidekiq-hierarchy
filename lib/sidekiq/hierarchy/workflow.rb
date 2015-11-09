@@ -29,8 +29,9 @@ module Sidekiq
       end
 
       def delete
-        workflow_set.remove(self) if workflow_set
-        root.delete
+        wset = workflow_set  # save it for later
+        root.delete  # deleting nodes is more important than a dangling reference
+        wset.remove(self) if wset  # now we can clear out from the set
       end
 
       # Walks the tree in DFS order (for optimal completion checking)

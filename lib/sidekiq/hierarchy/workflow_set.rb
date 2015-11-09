@@ -39,10 +39,27 @@ module Sidekiq
         !!Sidekiq.redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
       end
 
-      # XXX: this ONLY removes the workflow from the set; it MUST
-      # be deleted (using Workflow#delete) in order to reclaim space!
+      # Remove a workflow from the set if it is present. This operation can
+      # only be executed as cleanup (i.e., on a workflow that has been
+      # unpersisted/deleted); otherwise it will fail in order to avoid
+      # memory leaks.
       def remove(workflow)
+        raise 'Workflow still exists' if workflow.exists?
         Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
+      end
+
+      # Move a workflow to this set from its current one
+      # This should really be done in Lua, but unit testing support is just not there,
+      # so there is a potential race condition in which a workflow could end up in
+      # multiple sets. the effect of this is minimal, so we'll fix it later.
+      def move(workflow)
+        old_wset = workflow.workflow_set
+        Sidekiq.redis do |conn|
+          conn.multi do
+            conn.zrem(old_wset.redis_zkey, workflow.jid) if old_wset
+            conn.zadd(redis_zkey, Time.now.to_f, workflow.jid)
+          end.last
+        end
       end
 
       def each
@@ -82,21 +99,21 @@ module Sidekiq
       end
 
       def prune
-        jids = more_jids = nil
+        old_jids = excess_jids = nil
         Sidekiq.redis do |conn|
           now = Time.now.to_f
-          jids, _ = conn.multi do
+          old_jids, _ = conn.multi do
             conn.zrangebyscore(redis_zkey, '-inf', now - self.class.timeout)
             conn.zremrangebyscore(redis_zkey, '-inf', now - self.class.timeout)
           end
 
-          more_jids, _ = conn.multi do
+          excess_jids, _ = conn.multi do
             conn.zrange(redis_zkey, 0, -self.class.max_workflows - 1)
             conn.zremrangebyrank(redis_zkey, 0, -self.class.max_workflows - 1)
           end
         end
 
-        (jids + more_jids).each { |jid| Workflow.find_by_jid(jid).delete }
+        (old_jids + excess_jids).each { |jid| Workflow.find_by_jid(jid).delete }
       end
     end
 

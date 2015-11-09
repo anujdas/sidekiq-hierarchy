@@ -15,6 +15,10 @@ shared_examples_for 'workflow set' do
 
   let(:workflow) { Sidekiq::Hierarchy::Workflow.find(root) }
 
+  before do  # remove from workflow_set to establish testing baseline
+    Sidekiq.redis { |c| c.zrem(workflow_set.redis_zkey, workflow.jid) }
+  end
+
   describe '#==' do
     it 'verifies the other workflow set has the same type' do
       expect(workflow_set).to eq described_class.new
@@ -53,34 +57,64 @@ shared_examples_for 'workflow set' do
 
   describe '#contains?' do
     it 'tests whether the set includes the workflow' do
+      expect(workflow_set.contains?(workflow)).to be_falsey
       workflow_set.add(workflow)
       expect(workflow_set.contains?(workflow)).to be_truthy
-      workflow_set.remove(workflow)
-      expect(workflow_set.contains?(workflow)).to be_falsey
     end
   end
 
   describe '#remove' do
-    it 'removes the workflow from the set' do
-      workflow_set.add(workflow)
-      workflow_set.remove(workflow)
-
-      expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+    context 'when the workflow is persisted' do
+      it 'raises a runtime error' do
+        expect { workflow_set.remove(workflow) }.to raise_error
+      end
     end
 
-    it 'does nothing if the workflow is not in the set' do
-      workflow_set.remove(workflow)
+    context 'when the workflow has been deleted' do
+      before { root.delete }
 
-      expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+      it 'removes the workflow from the set' do
+        workflow_set.add(workflow)
+        workflow_set.remove(workflow)
+
+        expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+      end
+
+      it 'does nothing if the workflow is not in the set' do
+        workflow_set.remove(workflow)
+
+        expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+      end
+    end
+  end
+
+  describe '#move' do
+    context 'from an existing set matching the workflow status' do
+      let(:old_workflow_set) { workflow.workflow_set }
+      before { old_workflow_set.add(workflow) }
+      it 'moves the workflow' do
+        workflow_set.move(workflow)
+        unless workflow_set == old_workflow_set
+          expect(old_workflow_set.contains?(workflow)).to be_falsey
+        end
+        expect(workflow_set.contains?(workflow)).to be_truthy
+      end
+    end
+
+    context 'for a workflow not in any set' do
+      it 'adds the workflow to the new set' do
+        workflow_set.move(workflow)
+        expect(workflow_set.contains?(workflow)).to be_truthy
+      end
     end
   end
 
   describe '#each' do
-    let(:workflows) do
-      10.times.map { |i| Sidekiq::Hierarchy::Job.create(i.to_s, job_info) }
-        .map { |job| Sidekiq::Hierarchy::Workflow.new(job) }
+    let(:workflows) { (10..20).map { |i| Sidekiq::Hierarchy::Workflow.find_by_jid(i.to_s) } }
+    before do
+      workflow_set.each(&:delete)
+      workflows.each { |w| workflow_set.add(w) }
     end
-    before { workflows.each { |w| workflow_set.add(w) } }
     it 'yields every element of the set from most recent to least' do
       expect(workflow_set.each.map(&:root)).to eq workflows.reverse.map(&:root)
     end

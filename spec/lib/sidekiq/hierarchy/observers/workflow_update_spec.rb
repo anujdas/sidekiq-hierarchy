@@ -22,18 +22,28 @@ describe Sidekiq::Hierarchy::Observers::WorkflowUpdate do
     let(:running_set) { Sidekiq::Hierarchy::RunningSet.new }
     let(:failed_set) { Sidekiq::Hierarchy::FailedSet.new }
 
-    before { running_set.add(workflow) }
-
-    it 'removes the target workflow from its current status set' do
-      expect(running_set.contains?(workflow)).to be_truthy
-      observer.call(workflow.jid, :failed, workflow.status)
-      expect(running_set.contains?(workflow)).to be_falsey
+    context 'when the workflow is new' do
+      it 'adds the target workflow to the new status set' do
+        expect(failed_set.contains?(workflow)).to be_falsey
+        observer.call(workflow.jid, :failed, workflow.status)
+        expect(failed_set.contains?(workflow)).to be_truthy
+      end
     end
 
-    it 'adds the target workflow to the new status set' do
-      expect(failed_set.contains?(workflow)).to be_falsey
-      observer.call(workflow.jid, :failed, workflow.status)
-      expect(failed_set.contains?(workflow)).to be_truthy
+    context 'when the workflow is already in a set' do
+      before { running_set.add(workflow) }
+
+      it 'removes the target workflow from its current status set' do
+        expect(running_set.contains?(workflow)).to be_truthy
+        observer.call(workflow.jid, :failed, workflow.status)
+        expect(running_set.contains?(workflow)).to be_falsey
+      end
+
+      it 'adds the target workflow to the new status set' do
+        expect(failed_set.contains?(workflow)).to be_falsey
+        observer.call(workflow.jid, :failed, workflow.status)
+        expect(failed_set.contains?(workflow)).to be_truthy
+      end
     end
   end
 end
