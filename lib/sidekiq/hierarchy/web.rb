@@ -1,3 +1,8 @@
+# Web interface to Sidekiq-hierarchy
+# Optimised for ease-of-use, not efficiency; it's probably best
+# not to leave this open in a tab forever.
+# Sidekiq seems to use Bootstrap 3.0.0 currently; find docs at
+# http://bootstrapdocs.com/v3.0.0/docs/
 module Sidekiq
   module Hierarchy
     module Web
