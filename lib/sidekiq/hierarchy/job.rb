@@ -36,7 +36,6 @@ module Sidekiq
         def create(jid, job_hash, redis_pool=nil)
           new(jid, redis_pool).tap do |job|
             job[INFO_FIELD] = Sidekiq.dump_json(filtered_job_hash(job_hash))
-            job.enqueue!  # initial status: enqueued
           end
         end
 

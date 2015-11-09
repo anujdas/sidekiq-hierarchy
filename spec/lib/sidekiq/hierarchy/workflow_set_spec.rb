@@ -91,7 +91,7 @@ shared_examples_for 'workflow set' do
   describe '#move' do
     context 'from an existing set matching the workflow status' do
       let(:old_workflow_set) { workflow.workflow_set }
-      before { old_workflow_set.add(workflow) }
+      before { workflow.root.enqueue! }
       it 'moves the workflow' do
         workflow_set.move(workflow, old_workflow_set)
         unless workflow_set == old_workflow_set

@@ -52,8 +52,8 @@ describe Sidekiq::Hierarchy::Job do
       expect(new_node.jid).to eq new_jid
     end
 
-    it 'marks the new Job as enqueued' do
-      expect(new_node).to be_enqueued
+    it 'leaves the new Job with an unknown status' do
+      expect(new_node.status).to be :unknown
     end
 
     context 'saving job info' do
