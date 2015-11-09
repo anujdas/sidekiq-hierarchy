@@ -3,95 +3,118 @@
 <%= erb sidekiq_hierarchy_template(:_summary_bar) %>
 <%= erb sidekiq_hierarchy_template(:_search_bar) %>
 
-<a href="<%= workflow_set_url(:running) %>">
-  <h4>Running Workflows</h4>
-</a>
-<div class="table_container">
-  <table class="table table-hover table-bordered table-striped table-white">
-    <thead>
-      <tr>
-        <th>Workflow ID</th>
-        <th>Enqueued at</th>
-        <th>Run at</th>
-      </tr>
-    </thead>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <a href="<%= workflow_set_url(:running) %>">
+      <h4>Running Workflows</h4>
+    </a>
+  </div>
 
-    <tbody>
-      <% @running.each do |workflow| %>
-        <tr>
-          <td>
-            <a href="<%= workflow_url(workflow) %>">
-              <%= workflow.jid %>
-            </a>
-          </td>
-          <td><%= relative_time(workflow.enqueued_at) %></td>
-          <td><%= relative_time(workflow.run_at) if workflow.run_at %></td>
-        </tr>
-      <% end%>
-    </tbody>
-  </table>
+  <div class="panel-body">
+    <div class="table_container">
+      <table class="table table-hover table-bordered table-striped table-white">
+        <thead>
+          <tr>
+            <th>Workflow ID</th>
+            <th>Enqueued at</th>
+            <th>Run at</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @running.each do |workflow| %>
+            <tr>
+              <td>
+                <a href="<%= workflow_url(workflow) %>">
+                  <%= workflow.jid %>
+                </a>
+              </td>
+              <td><%= relative_time(workflow.enqueued_at) %></td>
+              <td><%= relative_time(workflow.run_at) if workflow.run_at %></td>
+            </tr>
+          <% end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<a href="<%= workflow_set_url(:complete) %>">
-  <h4>Complete Workflows</h4>
-</a>
-<div class="table_container">
-  <table class="table table-hover table-bordered table-striped table-white">
-    <thead>
-      <tr>
-        <th>Workflow ID</th>
-        <th>Enqueued at</th>
-        <th>Run at</th>
-        <th>Completed at</th>
-      </tr>
-    </thead>
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <a href="<%= workflow_set_url(:complete) %>">
+      <h4>Complete Workflows</h4>
+    </a>
+  </div>
 
-    <tbody>
-      <% @complete.each do |workflow| %>
-        <tr>
-          <td>
-            <a href="<%= workflow_url(workflow) %>">
-              <%= workflow.jid %>
-            </a>
-          </td>
-          <td><%= relative_time(workflow.enqueued_at) %></td>
-          <td><%= relative_time(workflow.run_at) %></td>
-          <td><%= relative_time(workflow.complete_at) %></td>
-        </tr>
-      <% end%>
-    </tbody>
-  </table>
+  <div class="panel-body">
+    <div class="table_container">
+      <table class="table table-hover table-bordered table-striped table-white">
+        <thead>
+          <tr>
+            <th>Workflow ID</th>
+            <th>Enqueued at</th>
+            <th>Run at</th>
+            <th>Completed at</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @complete.each do |workflow| %>
+            <tr>
+              <td>
+                <a href="<%= workflow_url(workflow) %>">
+                  <%= workflow.jid %>
+                </a>
+              </td>
+              <td><%= relative_time(workflow.enqueued_at) %></td>
+              <td><%= relative_time(workflow.run_at) %></td>
+              <td><%= relative_time(workflow.complete_at) %></td>
+            </tr>
+          <% end%>
+        </tbody>
+      </table>
+    </div>
+
+    <%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :complete} %>
+  </div>
 </div>
-<%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :complete} %>
 
-<a href="<%= workflow_set_url(:failed) %>">
-  <h4>Failed Workflows</h4>
-</a>
-<div class="table_container">
-  <table class="table table-hover table-bordered table-striped table-white">
-    <thead>
-      <tr>
-        <th>Workflow ID</th>
-        <th>Enqueued at</th>
-        <th>Run at</th>
-        <th>Failed at</th>
-      </tr>
-    </thead>
+<div class="panel panel-danger">
+  <div class="panel-heading">
+    <a href="<%= workflow_set_url(:failed) %>">
+      <h4>Failed Workflows</h4>
+    </a>
+  </div>
 
-    <tbody>
-      <% @failed.each do |workflow| %>
-        <tr>
-          <td>
-            <a href="<%= workflow_url(workflow) %>">
-              <%= workflow.jid %>
-            </a>
-          </td>
-          <td><%= relative_time(workflow.enqueued_at) %></td>
-          <td><%= relative_time(workflow.run_at) %></td>
-          <td><%= relative_time(workflow.failed_at) %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+  <div class="panel-body">
+    <div class="table_container">
+      <table class="table table-hover table-bordered table-striped table-white">
+        <thead>
+          <tr>
+            <th>Workflow ID</th>
+            <th>Enqueued at</th>
+            <th>Run at</th>
+            <th>Failed at</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @failed.each do |workflow| %>
+            <tr>
+              <td>
+                <a href="<%= workflow_url(workflow) %>">
+                  <%= workflow.jid %>
+                </a>
+              </td>
+              <td><%= relative_time(workflow.enqueued_at) %></td>
+              <td><%= relative_time(workflow.run_at) %></td>
+              <td><%= relative_time(workflow.failed_at) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :failed} %>
+  </div>
 </div>
-<%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :failed} %>

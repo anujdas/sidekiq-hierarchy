@@ -96,7 +96,7 @@ module Sidekiq
           if params['workflow_jid'] =~ /\A\h{24}\z/
             redirect to("/hierarchy/workflows/#{params['workflow_jid']}")
           else
-            redirect back
+            redirect to(:hierarchy)
           end
         end
 
@@ -110,8 +110,11 @@ module Sidekiq
         end
 
         app.delete %r{\A/hierarchy/workflows/(\h{24})\z} do |workflow_jid|
-          Workflow.find(workflow_jid).delete
-          redirect back
+          workflow = Workflow.find_by_jid(workflow_jid)
+          redirect_url = "/hierarchy/workflow_sets/#{workflow.status}"
+          workflow.delete
+
+          redirect to(redirect_url)
         end
 
         app.get '/hierarchy/jobs/?' do

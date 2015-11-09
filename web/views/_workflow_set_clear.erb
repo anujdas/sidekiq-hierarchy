@@ -3,5 +3,5 @@
     <input name="_method" type="hidden" value="delete" />
     <input name="authenticity_token" type="hidden" value="<%= session[:csrf] %>">
   </div>
-  <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This is irreversible')">Clear Set</button>
+  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This is irreversible and potentially very expensive')">Clear Set</button>
 </form>
