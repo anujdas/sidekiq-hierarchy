@@ -9,5 +9,3 @@
 
 <h4>Job Tree</h4>
 <%= erb sidekiq_hierarchy_template(:_workflow_tree), locals: {root: @job} %>
-
-<%= @job.info %>
