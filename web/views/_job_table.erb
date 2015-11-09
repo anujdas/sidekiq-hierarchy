@@ -2,6 +2,7 @@
   <thead>
     <tr>
       <th>JID</th>
+      <th>Class</th>
       <th>Queue</th>
       <th>Status</th>
       <th>Enqueued at</th>
@@ -19,6 +20,7 @@
             <%= job.jid %>
           </a>
         </td>
+        <td><%= job.info['class'] %></td>
         <td><%= job.info['queue'] %></td>
         <td>
           <span class="label label-<%= bootstrap_status(job.status) %>">
