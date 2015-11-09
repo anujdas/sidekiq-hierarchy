@@ -51,6 +51,10 @@ module Sidekiq
       def self.registered(app)
         app.helpers Helpers
 
+        app.not_found do
+          erb sidekiq_hierarchy_template(:not_found)
+        end
+
         app.get '/hierarchy/?' do
           running_set = RunningSet.new
           complete_set = CompleteSet.new
