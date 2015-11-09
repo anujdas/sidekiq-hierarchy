@@ -52,11 +52,10 @@ module Sidekiq
       # This should really be done in Lua, but unit testing support is just not there,
       # so there is a potential race condition in which a workflow could end up in
       # multiple sets. the effect of this is minimal, so we'll fix it later.
-      def move(workflow)
-        old_wset = workflow.workflow_set
+      def move(workflow, from_set=nil)
         Sidekiq.redis do |conn|
           conn.multi do
-            conn.zrem(old_wset.redis_zkey, workflow.jid) if old_wset
+            conn.zrem(from_set.redis_zkey, workflow.jid) if from_set
             conn.zadd(redis_zkey, Time.now.to_f, workflow.jid)
           end.last
         end

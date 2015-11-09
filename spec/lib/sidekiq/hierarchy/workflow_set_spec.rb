@@ -93,7 +93,7 @@ shared_examples_for 'workflow set' do
       let(:old_workflow_set) { workflow.workflow_set }
       before { old_workflow_set.add(workflow) }
       it 'moves the workflow' do
-        workflow_set.move(workflow)
+        workflow_set.move(workflow, old_workflow_set)
         unless workflow_set == old_workflow_set
           expect(old_workflow_set.contains?(workflow)).to be_falsey
         end
