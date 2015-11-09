@@ -15,6 +15,13 @@ shared_examples_for 'workflow set' do
 
   let(:workflow) { Sidekiq::Hierarchy::Workflow.find(root) }
 
+  describe '#==' do
+    it 'verifies the other workflow set has the same type' do
+      expect(workflow_set).to eq described_class.new
+      expect(workflow_set).to_not eq Sidekiq::Hierarchy::WorkflowSet.new('other_status')
+    end
+  end
+
   describe '#size' do
     before { Sidekiq.redis { |c| c.del(zset) } }
     it 'returns the size of the set' do

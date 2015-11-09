@@ -23,6 +23,10 @@ module Sidekiq
         @status = status
       end
 
+      def ==(other_workflow_set)
+        other_workflow_set.instance_of?(self.class)
+      end
+
       def size
         Sidekiq.redis { |conn| conn.zcard(redis_zkey) }
       end
