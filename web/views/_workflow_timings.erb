@@ -1,0 +1,14 @@
+<% if run_at = workflow.run_at %>
+  <dl class="dl-horizontal">
+    <% if workflow.complete? %>
+      <dt>Ran for</dt>
+      <dd><%= workflow.complete_at - run_at %> seconds</dd>
+    <% elsif workflow.failed? %>
+      <dt>Failed in</dt>
+      <dd><%= workflow.failed_at - run_at %> seconds</dd>
+    <% else %>
+      <dt>Running for</dt>
+      <dd><%= Time.now - run_at %> seconds</dd>
+    <% end %>
+  </dl>
+<% end %>

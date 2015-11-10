@@ -1,0 +1,10 @@
+<% if run_at = job.run_at %>
+  <dl class="dl-horizontal">
+      <dt>Enqueued for</dt>
+      <dd><%= run_at - job.enqueued_at %> seconds</dd>
+      <% if run_at && finished_at = (job.complete_at || job.failed_at) %>
+        <dt>Ran for</dt>
+        <dd><%= finished_at - run_at %> seconds</dd>
+      <% end %>
+  </dl>
+<% end %>

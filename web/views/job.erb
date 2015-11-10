@@ -6,6 +6,7 @@
 <%= erb sidekiq_hierarchy_template(:_job_progress_bar), locals: {job: @job} %>
 
 <%= erb sidekiq_hierarchy_template(:_job_table), locals: {jobs: [@job]} %>
+<%= erb sidekiq_hierarchy_template(:_job_timings), locals: {job: @job} %>
 
 <h4>Job Tree</h4>
 <%= erb sidekiq_hierarchy_template(:_workflow_tree), locals: {root: @job} %>
