@@ -25,7 +25,7 @@ describe Sidekiq::Hierarchy::Observers::WorkflowUpdate do
     context 'when the workflow is new' do
       it 'adds the target workflow to the new status set' do
         expect(failed_set.contains?(workflow)).to be_falsey
-        observer.call(workflow.jid, :failed, workflow.status)
+        observer.call(workflow, :failed, workflow.status)
         expect(failed_set.contains?(workflow)).to be_truthy
       end
     end
@@ -35,13 +35,13 @@ describe Sidekiq::Hierarchy::Observers::WorkflowUpdate do
 
       it 'removes the target workflow from its current status set' do
         expect(running_set.contains?(workflow)).to be_truthy
-        observer.call(workflow.jid, :failed, :running)
+        observer.call(workflow, :failed, :running)
         expect(running_set.contains?(workflow)).to be_falsey
       end
 
       it 'adds the target workflow to the new status set' do
         expect(failed_set.contains?(workflow)).to be_falsey
-        observer.call(workflow.jid, :failed, :running)
+        observer.call(workflow, :failed, :running)
         expect(failed_set.contains?(workflow)).to be_truthy
       end
     end

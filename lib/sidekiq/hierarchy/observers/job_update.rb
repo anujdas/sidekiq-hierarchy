@@ -6,8 +6,8 @@ module Sidekiq
           callback_registry.subscribe(Notifications::JOB_UPDATE, self)
         end
 
-        def call(job_jid, status, old_status)
-          Job.find(job_jid).workflow.update_status(status)
+        def call(job, status, old_status)
+          job.workflow.update_status(status)
         end
       end
     end

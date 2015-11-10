@@ -77,7 +77,7 @@ module Sidekiq
         return if !new_status || new_status == old_status  # don't publish null updates
         self[Job::WORKFLOW_STATUS_FIELD] = s_val
 
-        Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, jid, new_status, old_status)
+        Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, self, new_status, old_status)
       end
 
       def running?

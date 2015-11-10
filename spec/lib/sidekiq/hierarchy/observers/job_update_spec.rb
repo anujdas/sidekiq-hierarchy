@@ -24,9 +24,9 @@ describe Sidekiq::Hierarchy::Observers::JobUpdate do
     before { root.add_child(job) }
 
     it 'updates the related workflow using the new status' do
-      observer.call(root.jid, :running, job.status)
+      observer.call(root, :running, job.status)
       expect(workflow).to be_running
-      observer.call(job.jid, :failed, job.status)
+      observer.call(job, :failed, job.status)
       expect(workflow).to be_failed
     end
   end

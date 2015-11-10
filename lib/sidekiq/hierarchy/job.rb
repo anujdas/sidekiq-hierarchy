@@ -183,7 +183,7 @@ module Sidekiq
         self[STATUS_FIELD] = s_val
         self[t_field] = Time.now.to_f.to_s if t_field
 
-        Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, jid, new_status, old_status)
+        Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, self, new_status, old_status)
       end
 
       # Status update: mark as enqueued (step 1)

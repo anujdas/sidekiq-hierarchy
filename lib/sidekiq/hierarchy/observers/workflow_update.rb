@@ -6,8 +6,7 @@ module Sidekiq
           callback_registry.subscribe(Notifications::WORKFLOW_UPDATE, self)
         end
 
-        def call(root_jid, status, old_status)
-          workflow = Workflow.find_by_jid(root_jid)
+        def call(workflow, status, old_status)
           from_set = WorkflowSet.for_status(old_status)
           to_set = WorkflowSet.for_status(status)
 
