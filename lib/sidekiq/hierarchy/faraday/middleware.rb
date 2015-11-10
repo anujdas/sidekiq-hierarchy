@@ -1,5 +1,5 @@
 require 'faraday'
-require 'sidekiq/Hierarchy/http'
+require 'sidekiq/hierarchy/http'
 
 module Sidekiq
   module Hierarchy
