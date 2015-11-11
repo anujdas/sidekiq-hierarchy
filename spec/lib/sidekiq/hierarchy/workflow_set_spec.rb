@@ -3,7 +3,7 @@ require 'spec_helper'
 shared_examples_for 'workflow set' do
   subject(:workflow_set) { described_class.new }
 
-  let(:job_info) { {'class' => 'HardWorker', 'args' => [1, 'foo']} }
+  let(:job_info) { {'class' => 'HardWorker'} }
   let(:root) { Sidekiq::Hierarchy::Job.create('0', job_info) }
   let(:level1) { [Sidekiq::Hierarchy::Job.create('1', job_info), Sidekiq::Hierarchy::Job.create('2', job_info)] }
   let(:level2) { [Sidekiq::Hierarchy::Job.create('3', job_info), Sidekiq::Hierarchy::Job.create('4', job_info)] }
@@ -66,7 +66,7 @@ shared_examples_for 'workflow set' do
   describe '#remove' do
     context 'when the workflow is persisted' do
       it 'raises a runtime error' do
-        expect { workflow_set.remove(workflow) }.to raise_error
+        expect { workflow_set.remove(workflow) }.to raise_error(RuntimeError)
       end
     end
 
@@ -116,11 +116,11 @@ shared_examples_for 'workflow set' do
       workflows.each { |w| workflow_set.add(w) }
     end
     it 'yields every element of the set from most recent to least' do
-      expect(workflow_set.each.map(&:root)).to eq workflows.reverse.map(&:root)
+      expect(workflow_set.each.map(&:jid)).to eq workflows.reverse.map(&:jid)
     end
     it 'tolerates set modification during iteration' do
-      list = workflow_set.each.map { |result| workflows.each { |w| workflow_set.remove(w) }; result }
-      expect(list.map(&:root)).to eq workflows.reverse.map(&:root)
+      jids = workflow_set.each.map { |result| Sidekiq.redis { |c| c.del(workflow_set.redis_zkey) }; result.jid }
+      expect(jids).to eq workflows.reverse.map(&:jid)
     end
   end
 end
@@ -157,7 +157,7 @@ shared_examples_for 'pruning workflow set' do
   end
 
   describe '#prune' do
-    let(:max_workflows) { 10 }
+    let(:max_workflows) { 15 }
     let(:timeout) { 60 }  # seconds
 
     let(:pruned_workflows) do

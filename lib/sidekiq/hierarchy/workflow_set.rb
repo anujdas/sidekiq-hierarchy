@@ -64,14 +64,16 @@ module Sidekiq
       def each
         return enum_for(:each) unless block_given?
 
+        elements = []
         last_max_score = Time.now.to_f
         loop do
           elements = Sidekiq.redis do |conn|
-            conn.zrevrangebyscore(redis_zkey, "(#{last_max_score}", '-inf', limit: [0, PAGE_SIZE], with_scores: true)
+            conn.zrevrangebyscore(redis_zkey, last_max_score, '-inf', limit: [0, PAGE_SIZE], with_scores: true)
+              .drop_while { |elt| elements.include?(elt) }
           end
           break if elements.empty?
           elements.each { |jid, _| yield Workflow.find_by_jid(jid) }
-          last_max_score = elements.last[1]  # timestamp of last element
+          _, last_max_score = elements.last  # timestamp of last element
         end
       end
 
@@ -98,21 +100,13 @@ module Sidekiq
       end
 
       def prune
-        old_jids = excess_jids = nil
         Sidekiq.redis do |conn|
-          now = Time.now.to_f
-          old_jids, _ = conn.multi do
-            conn.zrangebyscore(redis_zkey, '-inf', now - self.class.timeout)
-            conn.zremrangebyscore(redis_zkey, '-inf', now - self.class.timeout)
-          end
-
-          excess_jids, _ = conn.multi do
-            conn.zrange(redis_zkey, 0, -self.class.max_workflows - 1)
-            conn.zremrangebyrank(redis_zkey, 0, -self.class.max_workflows - 1)
-          end
-        end
-
-        (old_jids + excess_jids).each { |jid| Workflow.find_by_jid(jid).delete }
+          conn.multi do
+            conn.zrangebyscore(redis_zkey, '-inf', Time.now.to_f - self.class.timeout)  # old workflows
+            conn.zrevrange(redis_zkey, self.class.max_workflows, -1)  # excess workflows
+          end.flatten.uniq  # take the union of both pruning strategies
+            .tap { |to_remove| conn.zrem(redis_zkey, to_remove) if to_remove.any? }
+        end.each { |jid| Workflow.find_by_jid(jid).delete }
       end
     end
 
