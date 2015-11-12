@@ -225,7 +225,32 @@ Note: Sidekiq-hierarchy makes use of callbacks internally to drive some of its o
 
 ## Network integration
 
-Todo
+A somewhat common pattern with Sidekiq is moving network calls to async jobs, preventing the network's synchronous nature from holding up workers. However, if the network endpoint triggers additional jobs, those child will no longer be linked to their parent, as the worker context is lost. Sidekiq-hierarchy solves this with a set of two optional middlewares: one for Rack (deciphering context from inbound requests) and one instrumenting Faraday (passing context in HTTP headers). Together, they transparently bridge the network gap, ensuring that jobs triggering other jobs over a network hop are recorded correctly.
+
+The network integration is not loaded by default. To use it, require `sidekiq/hierarchy/rack/middleware` and `sidekiq/hierarchy/faraday/middleware` (making sure `Rack` and `Faraday` are loaded), then insert them in the appropriate places. For Rails, the Rack middleware will usually go in `config/application.rb`:
+```ruby
+class Application < Rails::Application
+  # ...
+  config.middleware.use Sidekiq::Hierarchy::Rack::Middleware
+  # ...
+end
+```
+
+For Faraday, the connection object should be modified before use:
+```ruby
+Faraday.new do |f|
+  # ...
+  f.use Sidekiq::Hierarchy::Faraday::Middleware
+  # ...
+end
+```
+
+In the background, Sidekiq-hierarchy inserts and decodes two headers:
+
+- Sidekiq-Jid: the job id of the parent worker, if any
+- Sidekiq-Workflow: the workflow JID, if tracking is enabled (`workflow: true` in sidekiq_options)
+
+Even if you are not using Faraday, adding these headers should be easy with your network library of choice.
 
 ## Advanced Options
 
