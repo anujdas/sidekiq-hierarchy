@@ -254,7 +254,26 @@ Even if you are not using Faraday, adding these headers should be easy with your
 
 ## Advanced Options
 
-Todo
+There are a couple of additional configuration options you may want to use, depending on your needs:
+
+**Job Info**
+
+By default, Sidekiq-hierarchy only retains two pieces of information from each job, namely the class and queue. A full job hash in Sidekiq is much richer, but storing the full thing will take significantly more space (especially if you enable backtrace recording in the worker options). If there are additional pieces you need (for instance, the argument list could be quite useful), you can specify these per job:
+
+```ruby
+  sidekiq_options workflow_keys: ['args']
+```
+
+The list of keys must be an array of strings, which will be merged with `['class', 'queue']` (the default).
+
+**CompleteSet and FailedSet**
+
+While the `RunningSet` is never pruned, so that in-progress workflows will never lose information, completed and failed workflows must be pruned to prevent running out of space in Redis (though note, all keys used expire in one month, so don't expect data to stick around past that time regardless!). Sidekiq itself does not have this issue, since jobs are thrown away after completion, but this is obviously impossible for Sidekiq-hierarchy (else workflows would lose jobs as they completed).
+
+Two pruning strategies are employed, running on every workflow insertion: one which trims workflows older than a certain time, one which trims workflows past a certain count. These limits can be accessed as `CompleteSet.timeout` and `CompleteSet.max_workflows` (likewise for `FailedSet`, which shares the limits). These are set from global Sidekiq settings as follows:
+
+- `timeout`: `:dead_timeout_in_seconds` setting, also used by Sidekiq to prune dead jobs (default 6 months)
+- `max_workflows`: the first of `:dead_max_workflows` and `:dead_max_jobs`, whichever is set; the latter is used internally by Sidekiq to prune dead jobs (`:dead_max_jobs` default 10,000)
 
 ## Installation
 
@@ -272,11 +291,13 @@ Or install it yourself as:
 
     $ gem install sidekiq-hierarchy
 
+If you want to use the network bridge, you'll need `faraday` as well; if you're using the web UI, make sure `sinatra` is installed.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`. 
 
 ## License
 

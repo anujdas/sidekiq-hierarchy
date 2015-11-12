@@ -86,12 +86,12 @@ module Sidekiq
     # to stay within space constraints. Do _not_ use for workflows that
     # cannot be lost (i.e., are in any state of progress, or require followup)
     class PruningSet < WorkflowSet
-      def self.max_workflows
-        Sidekiq.options[:dead_max_workflows] || Sidekiq.options[:dead_max_jobs]
-      end
-
       def self.timeout
         Sidekiq.options[:dead_timeout_in_seconds]
+      end
+
+      def self.max_workflows
+        Sidekiq.options[:dead_max_workflows] || Sidekiq.options[:dead_max_jobs]
       end
 
       def add(workflow)
