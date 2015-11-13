@@ -1,0 +1,15 @@
+<span><%= flash[:success] %></span>
+<span><%= flash[:error] %></span>
+
+<%= form_tag jobs_path do %>
+  <div>
+    <%= radio_button_tag :worker, TestWorker.name %>
+    <%= label_tag "worker_#{TestWorker.name}", TestWorker.name %>
+    <%= radio_button_tag :worker, WebWorker.name %>
+    <%= label_tag "worker_#{WebWorker.name}", WebWorker.name %>
+    <%= radio_button_tag :worker, ParentWorker.name %>
+    <%= label_tag "worker_#{ParentWorker.name}", ParentWorker.name %>
+  </div>
+
+  <%= submit_tag 'Make me a job', data: {confirm: "As fast as I can?"} %>
+<% end %>
