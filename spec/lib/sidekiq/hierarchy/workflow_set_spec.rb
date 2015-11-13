@@ -113,7 +113,13 @@ shared_examples_for 'workflow set' do
     let(:workflows) { (10..20).map { |i| Sidekiq::Hierarchy::Workflow.find_by_jid(i.to_s) } }
     before do
       workflow_set.each(&:delete)
-      workflows.each { |w| workflow_set.add(w) }
+      workflows.each do |w|
+        workflow_set.add(w)
+        sleep 0.001   # horrible hack: jruby's timer only has ms precision, which gives random elements
+        # the same score. meanwhile, redis sorted sets sort lexicographically, so the the order is wrong.
+        # this isn't a problem normally, since redis takes > 1ms for network time, and mri's timer is
+        # higher-resolution so it doesn't run into issues either. come back to fix this later...
+      end
     end
     it 'yields every element of the set from most recent to least' do
       expect(workflow_set.each.map(&:jid)).to eq workflows.reverse.map(&:jid)

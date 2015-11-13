@@ -11,7 +11,5 @@ require 'sidekiq-hierarchy'
 Dir[File.dirname(__FILE__) + '/support/**/*.rb'].each { |f| require f }
 
 RSpec.configure do |config|
-  config.before(:each) do
-    Sidekiq.redis { |conn| conn.flushdb }  # clear out redis between specs
-  end
+  # configuration here
 end
