@@ -1,5 +1,10 @@
 # Sidekiq::Hierarchy
 
+
+[![Build Status](https://travis-ci.org/anujdas/sidekiq-hierarchy.png?branch=master)](https://travis-ci.org/anujdas/sidekiq-hierarchy)
+
+[![Gem Version](https://badge.fury.io/rb/sidekiq-hierarchy.png)](http://badge.fury.io/rb/sidekiq-hierarchy)
+
 Sidekiq-hierarchy is a gem that implements parent-child hierarchies between sidekiq jobs. Via several middlewares, it allows tracking complete workflows of multiple levels of sidekiq jobs, even across network calls, so long as a shared redis host is available.
 
 You may want to use sidekiq-hierarchy if you:
