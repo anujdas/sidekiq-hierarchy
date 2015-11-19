@@ -3,7 +3,7 @@ class TestWorker
 
   SAMPLE = [0, 0, 1, 5]
 
-  sidekiq_options workflow: true
+  sidekiq_options workflow: true, workflow_keys: ['args']
 
   def perform(*args)
     sleep 2
