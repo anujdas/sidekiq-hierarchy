@@ -14,8 +14,10 @@ module Sidekiq
         end
 
         def call(env)
-          Sidekiq::Hierarchy.current_jid = env[JID_HEADER_KEY]
-          Sidekiq::Hierarchy.current_workflow = Workflow.find_by_jid(env[WORKFLOW_HEADER_KEY]) if env[WORKFLOW_HEADER_KEY]
+          if env[WORKFLOW_HEADER_KEY] && env[JID_HEADER_KEY]
+            Sidekiq::Hierarchy.current_jid = env[JID_HEADER_KEY]
+            Sidekiq::Hierarchy.current_workflow = Workflow.find_by_jid(env[WORKFLOW_HEADER_KEY])
+          end
           @app.call(env)
         ensure
           Sidekiq::Hierarchy.current_workflow = nil

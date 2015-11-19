@@ -36,10 +36,18 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
       end
     end
 
-    context 'with current jid set' do
+    context 'with only the current jid set' do
       before { Sidekiq::Hierarchy.current_jid = jid }
-      it 'passes the jid via header' do
-        expect(response['jid']).to eq jid
+      it 'does not modify the request' do
+        expect(response['jid']).to be_nil
+        expect(response['workflow']).to be_nil
+      end
+    end
+
+    context 'with only the current workflow set' do
+      before { Sidekiq::Hierarchy.current_workflow = Sidekiq::Hierarchy::Workflow.find_by_jid(workflow) }
+      it 'does not modify the request' do
+        expect(response['jid']).to be_nil
         expect(response['workflow']).to be_nil
       end
     end
