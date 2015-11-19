@@ -6,7 +6,8 @@
 <div class="panel panel-info">
   <div class="panel-heading">
     <a href="<%= workflow_set_url(:running) %>">
-      <h4>Running Workflows</h4>
+      <h4 style="display:inline">Running Workflows</h4>
+      (<%= @running_set.size %> total, displaying <%= @running.size %> newest)
     </a>
   </div>
 
@@ -42,7 +43,8 @@
 <div class="panel panel-success">
   <div class="panel-heading">
     <a href="<%= workflow_set_url(:complete) %>">
-      <h4>Complete Workflows</h4>
+      <h4 style="display:inline">Complete Workflows</h4>
+      (<%= @complete_set.size %> total, displaying <%= @complete.size %> newest)
     </a>
   </div>
 
@@ -82,7 +84,8 @@
 <div class="panel panel-danger">
   <div class="panel-heading">
     <a href="<%= workflow_set_url(:failed) %>">
-      <h4>Failed Workflows</h4>
+      <h4 style="display:inline">Failed Workflows</h4>
+      (<%= @failed_set.size %> total, displaying <%= @failed.size %> newest)
     </a>
   </div>
 
