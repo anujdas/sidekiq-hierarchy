@@ -1,5 +1,5 @@
 module Sidekiq
   module Hierarchy
-    VERSION = '0.1.4'
+    VERSION = '1.0.0'
   end
 end
