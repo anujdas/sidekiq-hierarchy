@@ -12,10 +12,10 @@ module Sidekiq
         #   redis_pool - a redis-like connection/conn-pool
         # Must propagate return value upwards.
         # May return false/nil to stop the job from going to redis.
-        def call(worker_class, msg, queue, redis_pool)
+        def call(worker_class, msg, queue, redis_pool=nil)
           msg['workflow'] = Sidekiq::Hierarchy.current_workflow.jid if Sidekiq::Hierarchy.current_workflow
           # if block returns nil/false, job was cancelled before queueing by middleware
-          yield.tap { |job| Sidekiq::Hierarchy.record_job_enqueued(job) if job }
+          yield.tap { |job| Sidekiq::Hierarchy.record_job_enqueued(job, redis_pool) if job }
         end
       end
     end

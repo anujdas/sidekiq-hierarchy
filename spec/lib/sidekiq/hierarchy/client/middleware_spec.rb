@@ -63,5 +63,13 @@ describe Sidekiq::Hierarchy::Client::Middleware do
         expect(Sidekiq::Hierarchy::Job.find(job_id)).to_not exist
       end
     end
+
+    context 'on a sidekiq version without redis_pool' do
+      let(:jid) { 1 }
+      it 'functions correctly with the default redis' do
+        expect{ subject.call(TestWorker.class, {}, '') { {'workflow' => true, 'jid' => jid} } }.to_not raise_error
+        expect(Sidekiq::Hierarchy::Job.find(jid)).to be_enqueued
+      end
+    end
   end
 end

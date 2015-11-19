@@ -33,21 +33,25 @@ describe Sidekiq::Hierarchy::Rack::Middleware do
       end
     end
 
-    context 'with the Sidekiq-Hierarchy-Jid header set' do
-      it 'sets Sidekiq::Hierarchy.current_jid accordingly' do
+    context 'with only the Sidekiq-Hierarchy-Jid header set' do
+      it 'does not set any request-local values' do
         status, headers, body = middleware.call(mock_env(jid, nil))
         jbody = JSON.parse(body.first)
-        expect(jbody['jid']).to eq jid
+        expect(jbody['jid']).to be_nil
         expect(jbody['workflow']).to be_nil
-      end
-      it 'cleans up after the request' do
-        status, headers, body = middleware.call(mock_env(jid, nil))
-        expect(Sidekiq::Hierarchy.current_jid).to be_nil
-        expect(Sidekiq::Hierarchy.current_workflow).to be_nil
       end
     end
 
-    context 'with the Sidekiq-Hierarchy-Workflow header set' do
+    context 'with only the Sidekiq-Hierarchy-Workflow header set' do
+      it 'does not set any request-local values' do
+        status, headers, body = middleware.call(mock_env(nil, workflow))
+        jbody = JSON.parse(body.first)
+        expect(jbody['jid']).to be_nil
+        expect(jbody['workflow']).to be_nil
+      end
+    end
+
+    context 'with both the Sidekiq-Hierarchy-Workflow and Sidekiq-Hierarchy-Jid headers set' do
       it 'sets Sidekiq::Hierarchy.current_workflow accordingly' do
         status, headers, body = middleware.call(mock_env(jid, workflow))
         jbody = JSON.parse(body.first)

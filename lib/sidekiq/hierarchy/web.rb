@@ -61,13 +61,13 @@ module Sidekiq
         end
 
         app.get '/hierarchy/?' do
-          running_set = RunningSet.new
-          complete_set = CompleteSet.new
-          failed_set = FailedSet.new
+          @running_set = RunningSet.new
+          @complete_set = CompleteSet.new
+          @failed_set = FailedSet.new
 
-          @running = running_set.each.take(PER_PAGE)
-          @complete = complete_set.each.take(PER_PAGE)
-          @failed = failed_set.each.take(PER_PAGE)
+          @running = @running_set.each.take(PER_PAGE)
+          @complete = @complete_set.each.take(PER_PAGE)
+          @failed = @failed_set.each.take(PER_PAGE)
 
           erb sidekiq_hierarchy_template(:status)
         end
@@ -79,8 +79,8 @@ module Sidekiq
 
         app.get '/hierarchy/workflow_sets/:status' do |status|
           @status = status.to_sym
-          if workflow_set = WorkflowSet.for_status(@status)
-            @workflows = workflow_set.each.take(PER_PAGE)
+          if @workflow_set = WorkflowSet.for_status(@status)
+            @workflows = @workflow_set.each.take(PER_PAGE)
             erb sidekiq_hierarchy_template(:workflow_set)
           else
             halt 404
