@@ -1,7 +1,7 @@
 PATH
   remote: ../
   specs:
-    sidekiq-hierarchy (0.1.4)
+    sidekiq-hierarchy (1.0.0)
       sidekiq (~> 3.3)
 
 GEM
@@ -185,7 +185,7 @@ DEPENDENCIES
   rails (= 4.2.4)
   sass-rails (~> 5.0)
   sidekiq (~> 3.0)
-  sidekiq-hierarchy (~> 0.1)!
+  sidekiq-hierarchy!
   sinatra
   sqlite3
   turbolinks

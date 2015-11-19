@@ -17,7 +17,7 @@ gem 'jquery-rails'
 gem 'turbolinks'
 
 gem 'sidekiq', '~> 3.0'
-gem 'sidekiq-hierarchy', '~> 0.1', path: '../'
+gem 'sidekiq-hierarchy', path: '../'
 gem 'sinatra', require: nil
 gem 'faraday', '~> 0.9'
 
