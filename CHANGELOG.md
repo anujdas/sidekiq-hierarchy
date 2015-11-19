@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.1.4] - 2015-11-19
+### Changed
+- Added display of additional workflow keys (i.e., args) on web UI
+
 ## [0.1.3] - 2015-11-19
 ### Changed
 - Fixed workflow-enabled jobs spawned by untracked jobs, which should therefore be considered roots on their own
