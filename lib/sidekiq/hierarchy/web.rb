@@ -79,8 +79,8 @@ module Sidekiq
 
         app.get '/hierarchy/workflow_sets/:status' do |status|
           @status = status.to_sym
-          if workflow_set = WorkflowSet.for_status(@status)
-            @workflows = workflow_set.each.take(PER_PAGE)
+          if @workflow_set = WorkflowSet.for_status(@status)
+            @workflows = @workflow_set.each.take(PER_PAGE)
             erb sidekiq_hierarchy_template(:workflow_set)
           else
             halt 404
