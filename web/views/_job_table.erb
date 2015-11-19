@@ -9,19 +9,21 @@
       <th>Run at</th>
       <th>Completed at</th>
       <th>Failed at</th>
+      <th>Other</th>
     </tr>
   </thead>
 
   <tbody>
     <% jobs.each do |job| %>
       <tr>
+        <% info = job.info %>
         <td>
           <a href="<%= job_url(job) %>">
             <%= job.jid %>
           </a>
         </td>
-        <td><%= job.info['class'] %></td>
-        <td><%= job.info['queue'] %></td>
+        <td><%= info['class'] %></td>
+        <td><%= info['queue'] %></td>
         <td>
           <span class="label label-<%= bootstrap_status(job.status) %>">
             <%= job.status %>
@@ -31,6 +33,7 @@
         <td><%= job.run_at %></td>
         <td><%= job.complete_at %></td>
         <td><%= job.failed_at %></td>
+        <td><%= info.reject {|k,v| ['class', 'queue'].include?(k)} %></td>
       </tr>
     <% end %>
   </tbody>
