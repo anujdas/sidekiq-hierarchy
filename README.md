@@ -182,7 +182,7 @@ Explore the classes to learn more you can access, including:
 - timestamps for all status changes (`#enqueued_at`, `#run_at`, etc.)
 - tree exploration (`#root`, `#parent`, `#children`, `#leaf?`, etc.)
 - lazy enumerators over jobs and workflows (`Workflow#jobs`, `WorkflowSet#each`)
-- current workflow and job id context (`Sidekiq::Hierarchy.current_workflow`, `.current_jid`)
+- current workflow and job context (`Sidekiq::Hierarchy.current_workflow`, `.current_job`)
 
 Each `Workflow` can be treated as a Redis-backed hash (all values will be coerced to strings). Combined with the fact that the current workflow context can always be accessed via `Sidekiq::Hierarchy.current_workflow` (nil if not in a workflow), you can pass arbitrary information through a work tree.
 
@@ -282,7 +282,7 @@ end
 
 In the background, Sidekiq-hierarchy inserts and decodes two headers:
 
-- Sidekiq-Jid: the job id of the parent worker, if any
+- Sidekiq-Job: the job id of the parent worker, if any
 - Sidekiq-Workflow: the workflow JID, if tracking is enabled (`workflow: true` in sidekiq_options)
 
 Even if you are not using Faraday, adding these headers should be easy with your network library of choice.
@@ -346,14 +346,14 @@ On the server side, _inside_ the hierarchy middleware to ensure variables are se
 ```ruby
 class FailFast::ServerMiddleware
   def call(worker, job, queue)
-    current_jid = Sidekiq::Hierarchy.current_jid
+    current_job = Sidekiq::Hierarchy.current_job
     workflow = Sidekiq::Hierarchy.current_workflow
     return if workflow && workflow[:fail_fast]
     
     yield
     
   rescue => e
-    if workflow && Sidekiq::Hierarchy::Job.find(current_jid).failed?
+    if workflow && current_job.failed?
       workflow[:fail_fast] = '1'
     end
     raise  # make sure to propagate exception up

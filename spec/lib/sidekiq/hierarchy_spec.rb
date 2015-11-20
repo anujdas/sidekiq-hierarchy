@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Sidekiq::Hierarchy do
   before(:each) do
-    Thread.current[:workflow] = nil
-    Thread.current[:jid] = nil
+    Thread.current[:sidekiq_hierarchy_workflow] = nil
+    Thread.current[:sidekiq_hierarchy_job] = nil
   end
 
   let(:jid) { '0123456789ab' }
@@ -22,14 +22,14 @@ describe Sidekiq::Hierarchy do
   describe '.enabled?' do
     it 'checks whether the workflow is known' do
       expect(described_class).to_not be_enabled
-      Thread.current[:workflow] = jid
+      Thread.current[:sidekiq_hierarchy_workflow] = jid
       expect(described_class).to be_enabled
     end
   end
 
   describe '.current_workflow=' do
     it 'sets the thread-local workflow' do
-      expect(Thread.current[:workflow]).to be_nil
+      expect(Thread.current[:sidekiq_hierarchy_workflow]).to be_nil
       described_class.current_workflow = workflow
       expect(described_class.current_workflow).to eq workflow
     end
@@ -37,7 +37,7 @@ describe Sidekiq::Hierarchy do
 
   describe '.current_workflow' do
     it 'fetches the thread-local workflow' do
-      Thread.current[:workflow] = workflow
+      Thread.current[:sidekiq_hierarchy_workflow] = workflow
       expect(described_class.current_workflow).to eq workflow
     end
     it 'returns nil if thread workflow jid is not set' do
@@ -45,21 +45,21 @@ describe Sidekiq::Hierarchy do
     end
   end
 
-  describe '.current_jid=' do
-    it 'sets the thread-local jid' do
-      expect(Thread.current[:jid]).to be_nil
-      described_class.current_jid = jid
-      expect(described_class.current_jid).to eq jid
+  describe '.current_job=' do
+    it 'sets the thread-local job' do
+      expect(Thread.current[:sidekiq_hierarchy_job]).to be_nil
+      described_class.current_job = job
+      expect(described_class.current_job).to eq job
     end
   end
 
-  describe '.current_jid' do
-    it 'fetches the thread-local jid' do
-      Thread.current[:jid] = jid
-      expect(described_class.current_jid).to eq jid
+  describe '.current_job' do
+    it 'fetches the thread-local job' do
+      Thread.current[:sidekiq_hierarchy_job] = job
+      expect(described_class.current_job).to eq job
     end
-    it 'returns nil if thread jid is not set' do
-      expect(described_class.current_jid).to be_nil
+    it 'returns nil if thread job is not set' do
+      expect(described_class.current_job).to be_nil
     end
   end
 
@@ -78,7 +78,7 @@ describe Sidekiq::Hierarchy do
       context 'with workflow tracking enabled' do
         context 'with the current jid set by middleware' do
           let(:sidekiq_job) { {'jid' => child_jid, 'workflow' => jid} }
-          before { described_class.current_jid = jid }
+          before { described_class.current_job = job }
           it 'creates a new child Job and links it to the current jid' do
             expect { described_class.record_job_enqueued(sidekiq_job) }.
               to change { Sidekiq::Hierarchy::Job.find(jid).children }.
@@ -106,7 +106,7 @@ describe Sidekiq::Hierarchy do
     context 'from within a sidekiq job' do
       context 'with workflow tracking disabled' do
         let(:sidekiq_job) { {'jid' => child_jid} }
-        before { described_class.current_jid = jid }
+        before { described_class.current_job = job }
         it 'does nothing' do
           described_class.record_job_enqueued(sidekiq_job)
           expect(child_job.exists?).to be_falsey
@@ -115,7 +115,7 @@ describe Sidekiq::Hierarchy do
 
       context 'with workflow tracking enabled' do
         let(:sidekiq_job) { {'jid' => child_jid, 'workflow' => jid} }
-        before { described_class.current_jid = jid }
+        before { described_class.current_job = job }
         it 'creates a new child Job and links it to the current jid' do
           expect { described_class.record_job_enqueued(sidekiq_job) }.
             to change { Sidekiq::Hierarchy::Job.find(jid).children }.
@@ -129,7 +129,7 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.record_job_running' do
-    before { described_class.current_jid = jid }
+    before { described_class.current_job = job }
     context 'with workflow tracking disabled' do
       it 'does nothing' do
         described_class.record_job_running
@@ -146,7 +146,7 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.record_job_complete' do
-    before { described_class.current_jid = jid }
+    before { described_class.current_job = job }
     context 'with workflow tracking disabled' do
       it 'does nothing' do
         described_class.record_job_complete
@@ -163,7 +163,7 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.record_job_requeued' do
-    before { described_class.current_jid = jid }
+    before { described_class.current_job = job }
     context 'with workflow tracking disabled' do
       it 'does nothing' do
         described_class.record_job_requeued
@@ -180,7 +180,7 @@ describe Sidekiq::Hierarchy do
   end
 
   describe '.record_job_failed' do
-    before { described_class.current_jid = jid }
+    before { described_class.current_job = job }
     context 'with workflow tracking disabled' do
       it 'does nothing' do
         described_class.record_job_failed

@@ -5,7 +5,7 @@ class Sidekiq::Shutdown < Interrupt; end
 describe Sidekiq::Hierarchy::Server::Middleware do
   after do  # eliminate side-effects
     Sidekiq::Hierarchy.current_workflow = nil
-    Sidekiq::Hierarchy.current_jid = nil
+    Sidekiq::Hierarchy.current_job = nil
   end
 
   describe '#call' do

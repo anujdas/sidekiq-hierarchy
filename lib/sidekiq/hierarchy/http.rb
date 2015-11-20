@@ -1,7 +1,7 @@
 module Sidekiq
   module Hierarchy
     module Http
-      JID_HEADER = 'Sidekiq-Jid'.freeze
+      JOB_HEADER = 'Sidekiq-Job'.freeze
       WORKFLOW_HEADER = 'Sidekiq-Workflow'.freeze
     end
   end

@@ -34,22 +34,22 @@ module Sidekiq
 
       # Sets the workflow object for the current fiber/worker
       def current_workflow=(workflow)
-        Thread.current[:workflow] = workflow
+        Thread.current[:sidekiq_hierarchy_workflow] = workflow
       end
 
       # Retrieves the current Sidekiq workflow if previously set
       def current_workflow
-        Thread.current[:workflow]
+        Thread.current[:sidekiq_hierarchy_workflow]
       end
 
-      # Sets the jid for the current fiber/worker
-      def current_jid=(jid)
-        Thread.current[:jid] = jid
+      # Sets the job for the current fiber/worker
+      def current_job=(job)
+        Thread.current[:sidekiq_hierarchy_job] = job
       end
 
-      # Retrieves jid for the current Sidekiq job if previously set
-      def current_jid
-        Thread.current[:jid]
+      # Retrieves job for the current Sidekiq job if previously set
+      def current_job
+        Thread.current[:sidekiq_hierarchy_job]
       end
 
 
@@ -57,15 +57,14 @@ module Sidekiq
 
       def record_job_enqueued(job)
         return unless !!job['workflow']
-        if current_jid.nil?
+        if current_job.nil?
           # this is a root-level job, i.e., start of a workflow
           queued_job = Job.create(job['jid'], job)
           queued_job.enqueue!  # initial status: enqueued
-        elsif current_jid == job['jid']
+        elsif current_job.jid == job['jid']
           # this is a job requeuing itself, ignore it
         else
           # this is an intermediate job, having both parent and children
-          current_job = Job.find(current_jid)
           queued_job = Job.create(job['jid'], job)
           current_job.add_child(queued_job)
           queued_job.enqueue!  # initial status: enqueued
@@ -73,23 +72,23 @@ module Sidekiq
       end
 
       def record_job_running
-        return unless enabled? && current_jid
-        Job.find(current_jid).run!
+        return unless enabled? && current_job
+        current_job.run!
       end
 
       def record_job_complete
-        return unless enabled? && current_jid
-        Job.find(current_jid).complete!
+        return unless enabled? && current_job
+        current_job.complete!
       end
 
       def record_job_requeued
-        return unless enabled? && current_jid
-        Job.find(current_jid).requeue!
+        return unless enabled? && current_job
+        current_job.requeue!
       end
 
       def record_job_failed
-        return unless enabled? && current_jid
-        Job.find(current_jid).fail!
+        return unless enabled? && current_job
+        current_job.fail!
       end
 
 
