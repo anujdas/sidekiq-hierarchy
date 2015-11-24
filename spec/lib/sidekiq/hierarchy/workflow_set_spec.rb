@@ -16,7 +16,7 @@ shared_examples_for 'workflow set' do
   let(:workflow) { Sidekiq::Hierarchy::Workflow.find(root) }
 
   before do  # remove from workflow_set to establish testing baseline
-    Sidekiq.redis { |c| c.zrem(workflow_set.redis_zkey, workflow.jid) }
+    subject.redis { |c| c.zrem(workflow_set.redis_zkey, workflow.jid) }
   end
 
   describe '#==' do
@@ -27,9 +27,9 @@ shared_examples_for 'workflow set' do
   end
 
   describe '#size' do
-    before { Sidekiq.redis { |c| c.del(zset) } }
+    before { subject.redis { |c| c.del(zset) } }
     it 'returns the size of the set' do
-      expect { Sidekiq.redis { |c| c.zadd(zset, 0, 0) } }
+      expect { subject.redis { |c| c.zadd(zset, 0, 0) } }
         .to change { workflow_set.size }
         .from(0)
         .to(1)
@@ -42,7 +42,7 @@ shared_examples_for 'workflow set' do
 
     it 'inserts a workflow into the set by root jid ordered on timestamp' do
       workflow_set.add(workflow)
-      expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to eq time
+      expect(subject.redis { |c| c.zscore(zset, workflow.root.jid) }).to eq time
     end
 
     it 'updates timestamp given a duplicate workflow' do
@@ -51,7 +51,7 @@ shared_examples_for 'workflow set' do
       allow(Time).to receive(:now).and_return(Time.at(time + 1))
       workflow_set.add(workflow)
 
-      expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to eq time + 1
+      expect(subject.redis { |c| c.zscore(zset, workflow.root.jid) }).to eq time + 1
     end
   end
 
@@ -77,13 +77,13 @@ shared_examples_for 'workflow set' do
         workflow_set.add(workflow)
         workflow_set.remove(workflow)
 
-        expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+        expect(subject.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
       end
 
       it 'does nothing if the workflow is not in the set' do
         workflow_set.remove(workflow)
 
-        expect(Sidekiq.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
+        expect(subject.redis { |c| c.zscore(zset, workflow.root.jid) }).to be_nil
       end
     end
   end
@@ -125,7 +125,7 @@ shared_examples_for 'workflow set' do
       expect(workflow_set.each.map(&:jid)).to eq workflows.reverse.map(&:jid)
     end
     it 'tolerates set modification during iteration' do
-      jids = workflow_set.each.map { |result| Sidekiq.redis { |c| c.del(workflow_set.redis_zkey) }; result.jid }
+      jids = workflow_set.each.map { |result| subject.redis { |c| c.del(workflow_set.redis_zkey) }; result.jid }
       expect(jids).to eq workflows.reverse.map(&:jid)
     end
   end

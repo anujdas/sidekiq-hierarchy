@@ -5,6 +5,8 @@ module Sidekiq
 
     # A sorted set of Workflows that permits enumeration
     class WorkflowSet
+      include RedisConnection
+
       PAGE_SIZE = 100
 
       def self.for_status(status)
@@ -28,15 +30,15 @@ module Sidekiq
       end
 
       def size
-        Sidekiq.redis { |conn| conn.zcard(redis_zkey) }
+        redis { |conn| conn.zcard(redis_zkey) }
       end
 
       def add(workflow)
-        Sidekiq.redis { |conn| conn.zadd(redis_zkey, Time.now.to_f, workflow.jid) }
+        redis { |conn| conn.zadd(redis_zkey, Time.now.to_f, workflow.jid) }
       end
 
       def contains?(workflow)
-        !!Sidekiq.redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
+        !!redis { |conn| conn.zscore(redis_zkey, workflow.jid) }
       end
 
       # Remove a workflow from the set if it is present. This operation can
@@ -45,7 +47,7 @@ module Sidekiq
       # memory leaks.
       def remove(workflow)
         raise 'Workflow still exists' if workflow.exists?
-        Sidekiq.redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
+        redis { |conn| conn.zrem(redis_zkey, workflow.jid) }
       end
 
       # Move a workflow to this set from its current one
@@ -53,7 +55,7 @@ module Sidekiq
       # so there is a potential race condition in which a workflow could end up in
       # multiple sets. the effect of this is minimal, so we'll fix it later.
       def move(workflow, from_set=nil)
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.multi do
             conn.zrem(from_set.redis_zkey, workflow.jid) if from_set
             conn.zadd(redis_zkey, Time.now.to_f, workflow.jid)
@@ -67,7 +69,7 @@ module Sidekiq
         elements = []
         last_max_score = Time.now.to_f
         loop do
-          elements = Sidekiq.redis do |conn|
+          elements = redis do |conn|
             conn.zrevrangebyscore(redis_zkey, last_max_score, '-inf', limit: [0, PAGE_SIZE], with_scores: true)
               .drop_while { |elt| elements.include?(elt) }
           end
@@ -100,7 +102,7 @@ module Sidekiq
       end
 
       def prune
-        Sidekiq.redis do |conn|
+        redis do |conn|
           conn.multi do
             conn.zrangebyscore(redis_zkey, '-inf', Time.now.to_f - self.class.timeout)  # old workflows
             conn.zrevrange(redis_zkey, self.class.max_workflows, -1)  # excess workflows

@@ -32,6 +32,7 @@ Disclaimer: Sidekiq-hierarchy supports Sidekiq 3.x, and thus MRI 2.0+ and JRuby;
     - [Advanced Options](#advanced-options)
         - [Additional Job Info](#additional-job-info)
         - [CompleteSet and FailedSet](#completeset-and-failedset)
+        - [Separate Redis Storage](#separate-redis-storage)
     - [More Examples](#more-examples)
         - [Fail-fast workflow cancellation](#fail-fast-workflow-cancellation)
         - [Workflow Metrics Dashboard](#workflow-metrics-dashboard)
@@ -302,6 +303,30 @@ Two pruning strategies are employed, running on every workflow insertion: one wh
 
 - `timeout`: `:dead_timeout_in_seconds` setting, also used by Sidekiq to prune dead jobs (default 6 months)
 - `max_workflows`: the first of `:dead_max_workflows` and `:dead_max_jobs`, whichever is set; the latter is used internally by Sidekiq to prune dead jobs (`:dead_max_jobs` default 10,000)
+
+###Separate Redis Storage
+
+Depending on the size of your workflows, the default storage of all information in Sidekiq's redis instance may not be right for you. Sidekiq-hierarchy makes an effort to use as little overhead as possible, about 200 bytes per job on average. Depending on factors like the length of your worker class names, the additional job info you choose to store, and the number of children each job has, you may see more or less space usage; test on your own data to be sure.
+
+Because this data is usually less critical and more disposable than your Sidekiq queues or other Redis information, Sidekiq-hierarchy offers the option of using a separate Redis instance/cluster to store its metadata. This has three big advantages over the default of `Sidekiq.redis`:
+
+- prevents memory pressure on your primary Redis instance,
+- permits usage of a less robust, smaller, and/or cheaper Redis server for hierarchy data,
+- and most importantly, allows sharing of the Redis instance between services, letting you track workflows between services (provided that network integration is set up).
+
+Sidekiq-hierarchy accepts either a raw Redis connection or a ConnectionPool, though a ConnectionPool with appropriate size and timeout is highly recommended (see [mperham/connection_pool](https://github.com/mperham/connection_pool) for details). In either case, configuration can be performed at initialization:
+
+```ruby
+# with a bare Redis connection
+alt_redis = Redis.new(db: 1)
+Sidekiq::Hierarchy.redis = alt_redis
+
+# with a Redis connection pool
+conn_pool = ConnectionPool.new(size: 10, timeout: 2) { Redis.new(host: 'data-redis-master') }
+Sidekiq::Hierarchy.redis = conn_pool
+```
+
+Using the same redis server with multiple services that talk to one another via async jobs is a quick and dirty way to get a map of your SOA, as long as you are aware of its limitations (no tracking connections not initiated through Sidekiq).
 
 ## More Examples
 
