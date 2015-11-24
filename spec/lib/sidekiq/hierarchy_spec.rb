@@ -11,6 +11,14 @@ describe Sidekiq::Hierarchy do
   let(:job) { Sidekiq::Hierarchy::Job.find(jid) }
   let(:workflow) { Sidekiq::Hierarchy::Workflow.find(job) }
 
+  describe '.redis=' do
+    let(:redis_pool) { ConnectionPool.new { Redis.new } }
+    it 'sets the global redis connection' do
+      described_class.redis = redis_pool
+      expect(Sidekiq::Hierarchy::RedisConnection.redis).to be redis_pool
+    end
+  end
+
   describe '.enabled?' do
     it 'checks whether the workflow is known' do
       expect(described_class).to_not be_enabled

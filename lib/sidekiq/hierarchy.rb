@@ -1,6 +1,8 @@
 require 'sidekiq'
 require 'sidekiq/hierarchy/version'
 
+require 'sidekiq/hierarchy/redis_connection'
+
 require 'sidekiq/hierarchy/job'
 require 'sidekiq/hierarchy/workflow'
 require 'sidekiq/hierarchy/workflow_set'
@@ -15,6 +17,12 @@ require 'sidekiq/hierarchy/client/middleware'
 module Sidekiq
   module Hierarchy
     class << self
+
+      ### Global redis store -- overrides default Sidekiq redis
+
+      def redis=(conn)
+        RedisConnection.redis = conn
+      end
 
       ### Per-thread context tracking
 
@@ -47,18 +55,18 @@ module Sidekiq
 
       ### Workflow execution updates
 
-      def record_job_enqueued(job, redis_pool=nil)
+      def record_job_enqueued(job)
         return unless !!job['workflow']
         if current_jid.nil?
           # this is a root-level job, i.e., start of a workflow
-          queued_job = Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
+          queued_job = Job.create(job['jid'], job)
           queued_job.enqueue!  # initial status: enqueued
         elsif current_jid == job['jid']
           # this is a job requeuing itself, ignore it
         else
           # this is an intermediate job, having both parent and children
-          current_job = Sidekiq::Hierarchy::Job.find(current_jid, redis_pool)
-          queued_job = Sidekiq::Hierarchy::Job.create(job['jid'], job, redis_pool)
+          current_job = Job.find(current_jid)
+          queued_job = Job.create(job['jid'], job)
           current_job.add_child(queued_job)
           queued_job.enqueue!  # initial status: enqueued
         end
@@ -66,22 +74,22 @@ module Sidekiq
 
       def record_job_running
         return unless enabled? && current_jid
-        Sidekiq::Hierarchy::Job.find(current_jid).run!
+        Job.find(current_jid).run!
       end
 
       def record_job_complete
         return unless enabled? && current_jid
-        Sidekiq::Hierarchy::Job.find(current_jid).complete!
+        Job.find(current_jid).complete!
       end
 
       def record_job_requeued
         return unless enabled? && current_jid
-        Sidekiq::Hierarchy::Job.find(current_jid).requeue!
+        Job.find(current_jid).requeue!
       end
 
       def record_job_failed
         return unless enabled? && current_jid
-        Sidekiq::Hierarchy::Job.find(current_jid).fail!
+        Job.find(current_jid).fail!
       end
 
 

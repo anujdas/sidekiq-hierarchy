@@ -1,6 +1,8 @@
 module Sidekiq
   module Hierarchy
     class Job
+      include RedisConnection
+
       # Job hash keys
       INFO_FIELD = 'i'.freeze
       PARENT_FIELD = 'p'.freeze
@@ -25,16 +27,15 @@ module Sidekiq
 
       attr_reader :jid
 
-      def initialize(jid, redis_pool=nil)
+      def initialize(jid)
         @jid = jid
-        @redis_pool = redis_pool
       end
 
       class << self
         alias_method :find, :new
 
-        def create(jid, job_hash, redis_pool=nil)
-          new(jid, redis_pool).tap do |job|
+        def create(jid, job_hash)
+          new(jid).tap do |job|
             job[INFO_FIELD] = Sidekiq.dump_json(filtered_job_hash(job_hash))
           end
         end
@@ -54,9 +55,7 @@ module Sidekiq
       end
 
       def exists?
-        redis do |conn|
-          conn.exists(redis_job_hkey)
-        end
+        redis { |conn| conn.exists(redis_job_hkey) }
       end
 
       def ==(other_job)
@@ -66,9 +65,7 @@ module Sidekiq
 
       # Magic getter backed by redis hash
       def [](key)
-        redis do |conn|
-          conn.hget(redis_job_hkey, key)
-        end
+        redis { |conn| conn.hget(redis_job_hkey, key) }
       end
 
       # Magic setter backed by redis hash
@@ -91,13 +88,13 @@ module Sidekiq
 
       def parent
         if parent_jid = self[PARENT_FIELD]
-          self.class.find(parent_jid, @redis_pool)
+          self.class.find(parent_jid)
         end
       end
 
       def children
         redis do |conn|
-          conn.lrange(redis_children_lkey, 0, -1).map { |jid| self.class.find(jid, @redis_pool) }
+          conn.lrange(redis_children_lkey, 0, -1).map { |jid| self.class.find(jid) }
         end
       end
 
@@ -276,15 +273,6 @@ module Sidekiq
       def redis_children_lkey
         "#{redis_job_hkey}:children"
       end
-
-      def redis(&blk)
-        if @redis_pool
-          @redis_pool.with(&blk)
-        else
-          Sidekiq.redis(&blk)
-        end
-      end
-      private :redis
     end
   end
 end
