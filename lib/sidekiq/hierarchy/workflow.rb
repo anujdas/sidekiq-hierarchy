@@ -70,12 +70,13 @@ module Sidekiq
           new_status, s_val = :running, Job::STATUS_RUNNING
         elsif from_job_status == :failed
           new_status, s_val = :failed, Job::STATUS_FAILED
-        elsif from_job_status == :complete && jobs.all?(&:complete?)
+        elsif from_job_status == :complete && root.subtree_size == root.finished_subtree_size
           new_status, s_val = :complete, Job::STATUS_COMPLETE
         end
-
         return if !new_status || new_status == old_status  # don't publish null updates
+
         self[Job::WORKFLOW_STATUS_FIELD] = s_val
+        self[Job::WORKFLOW_FINISHED_AT_FIELD] = Time.now.to_f.to_s if [:failed, :complete].include?(new_status)
 
         Sidekiq::Hierarchy.publish(Notifications::WORKFLOW_UPDATE, self, new_status, old_status)
       end
@@ -106,13 +107,19 @@ module Sidekiq
       # Returns the time at which all jobs were complete;
       # nil if any jobs are still incomplete
       def complete_at
-        jobs.map(&:complete_at).max if complete?
+        Time.at(self[Job::WORKFLOW_FINISHED_AT_FIELD].to_f) if complete?
       end
 
       # Returns the earliest time at which a job failed;
       # nil if none did
       def failed_at
-        jobs.map(&:failed_at).compact.min if failed?
+        Time.at(self[Job::WORKFLOW_FINISHED_AT_FIELD].to_f) if failed?
+      end
+
+      def finished_at
+        if timestamp = self[Job::WORKFLOW_FINISHED_AT_FIELD]
+          Time.at(timestamp.to_f)
+        end
       end
 
 
