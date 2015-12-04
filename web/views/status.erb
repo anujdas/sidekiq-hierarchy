@@ -19,6 +19,7 @@
             <th>Workflow ID</th>
             <th>Enqueued at</th>
             <th>Run at</th>
+            <th>Completion</th>
           </tr>
         </thead>
 
@@ -30,8 +31,9 @@
                   <%= workflow.jid %>
                 </a>
               </td>
-              <td><%= relative_time(workflow.enqueued_at) %></td>
-              <td><%= relative_time(workflow.run_at) if workflow.run_at %></td>
+              <td><%= safe_relative_time(workflow.enqueued_at) %></td>
+              <td><%= safe_relative_time(workflow.run_at) if workflow.run_at %></td>
+              <td><%= workflow.finished_job_count %>/<%= workflow.job_count %></td>
             </tr>
           <% end%>
         </tbody>
@@ -57,6 +59,7 @@
             <th>Enqueued at</th>
             <th>Run at</th>
             <th>Completed at</th>
+            <th>Job count</th>
           </tr>
         </thead>
 
@@ -68,9 +71,10 @@
                   <%= workflow.jid %>
                 </a>
               </td>
-              <td><%= relative_time(workflow.enqueued_at) %></td>
-              <td><%= relative_time(workflow.run_at) %></td>
-              <td><%= relative_time(workflow.complete_at) %></td>
+              <td><%= safe_relative_time(workflow.enqueued_at) %></td>
+              <td><%= safe_relative_time(workflow.run_at) %></td>
+              <td><%= safe_relative_time(workflow.complete_at) %></td>
+              <td><%= workflow.job_count %></td>
             </tr>
           <% end%>
         </tbody>
@@ -98,6 +102,7 @@
             <th>Enqueued at</th>
             <th>Run at</th>
             <th>Failed at</th>
+            <th>Job count</th>
           </tr>
         </thead>
 
@@ -109,9 +114,10 @@
                   <%= workflow.jid %>
                 </a>
               </td>
-              <td><%= relative_time(workflow.enqueued_at) %></td>
-              <td><%= relative_time(workflow.run_at) %></td>
-              <td><%= relative_time(workflow.failed_at) %></td>
+              <td><%= safe_relative_time(workflow.enqueued_at) %></td>
+              <td><%= safe_relative_time(workflow.run_at) %></td>
+              <td><%= safe_relative_time(workflow.failed_at) %></td>
+              <td><%= workflow.job_count %></td>
             </tr>
           <% end %>
         </tbody>
