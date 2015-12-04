@@ -2,6 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.0] - 2015-12-04
+### Changed
+- HTTP headers renamed to make roles more clear
+- Thread locals renamed to make collisions less likely
+
+### Added
+- Track workflow timings directly to avoid iteration
+- Record per-subtree job counts and finished job counts
+- Add subtree iteration
+
+
 ## [1.1.0] - 2015-12-04
 ### Changed
 - Use Sinatra template helpers to get template caching for views
