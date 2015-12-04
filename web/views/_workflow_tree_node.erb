@@ -5,12 +5,14 @@
     </span>
     (<%= job.info['queue'] %>)
     <span class="label label-<%= bootstrap_status(job.status) %>">
-      <%= job.status %> <%= relative_time(status_updated_at(job)) %>
+      <%= job.status %> <%= safe_relative_time(status_updated_at(job)) %>
     </span>
   </a>
-  <% unless job.leaf? %>
+
+  <%- children = job.children %>
+  <% if children.any? %>
     <ul>
-      <% job.children.each do |child| %>
+      <% children.each do |child| %>
         <%= erb :_workflow_tree_node, locals: {job: child} %>
       <% end %>
     </ul>

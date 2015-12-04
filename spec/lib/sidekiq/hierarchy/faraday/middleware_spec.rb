@@ -10,7 +10,7 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
       conn.adapter :test do |stub|
         stub.post('/') do |env|
           body = {workflow: env[:request_headers][Sidekiq::Hierarchy::Http::WORKFLOW_HEADER],
-                  jid: env[:request_headers][Sidekiq::Hierarchy::Http::JID_HEADER]}
+                  jid: env[:request_headers][Sidekiq::Hierarchy::Http::JOB_HEADER]}
           [200, {'Content-Type' => 'application/json'}, body.to_json]
         end
       end
@@ -21,7 +21,7 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
   subject(:response) { JSON.parse(raw_response.body) }
 
   after do
-    Sidekiq::Hierarchy.current_jid = nil
+    Sidekiq::Hierarchy.current_job = nil
     Sidekiq::Hierarchy.current_workflow = nil
   end
 
@@ -37,7 +37,7 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
     end
 
     context 'with only the current jid set' do
-      before { Sidekiq::Hierarchy.current_jid = jid }
+      before { Sidekiq::Hierarchy.current_job = Sidekiq::Hierarchy::Job.find(jid) }
       it 'does not modify the request' do
         expect(response['jid']).to be_nil
         expect(response['workflow']).to be_nil
@@ -54,7 +54,7 @@ describe Sidekiq::Hierarchy::Faraday::Middleware do
 
     context 'with current jid and workflow set' do
       before do
-        Sidekiq::Hierarchy.current_jid = jid
+        Sidekiq::Hierarchy.current_job = Sidekiq::Hierarchy::Job.find(jid)
         Sidekiq::Hierarchy.current_workflow = Sidekiq::Hierarchy::Workflow.find_by_jid(workflow)
       end
       it 'passes the jid and workflow via header' do

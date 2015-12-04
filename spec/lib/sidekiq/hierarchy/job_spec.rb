@@ -182,6 +182,91 @@ describe Sidekiq::Hierarchy::Job do
     end
   end
 
+  describe '#subtree_jobs' do
+    it 'returns a lazy Enumerator' do
+      expect(root.subtree_jobs).to be_an Enumerator
+      expect(root.subtree_jobs.first.jid).to eq root.jid
+      expect(root.subtree_jobs.count).to eq ([root] + level1 + level2).length
+    end
+    it 'traverses all nodes depth-first reverse-order' do
+      expect(root.subtree_jobs.map(&:jid)).to eq ['0', '2', '1', '4', '3']
+    end
+  end
+
+  describe '#subtree_size' do
+    let(:new_job) { described_class.create('000000000000', job_info) }
+    it 'is one for a newly created job' do
+      expect(new_job.subtree_size).to eq 1
+    end
+    it 'fetches the subtree size from redis' do
+      new_job[described_class::SUBTREE_SIZE_FIELD] = 10
+      expect(new_job.subtree_size).to eq 10
+    end
+  end
+
+  describe '#increment_subtree_size' do
+    let(:incr) { 10 }
+
+    it 'adds the increment to the job subtree size' do
+      expect { root.increment_subtree_size(incr) }.
+        to change { root.subtree_size }.
+        by(incr)
+    end
+
+    it 'adds the increment to each parent subtree size' do
+      expect { level2.last.increment_subtree_size(incr) }.
+        to change { level2.last.parent.subtree_size }.
+        by(incr)
+
+      expect { level2.last.increment_subtree_size(incr) }.
+        to change { root.subtree_size }.
+        by(incr)
+    end
+
+    it 'defaults to an increment of 1' do
+      expect { root.increment_subtree_size }.
+        to change { root.subtree_size }.
+        by(1)
+    end
+  end
+
+  describe '#finished_subtree_size' do
+    let(:new_job) { described_class.create('000000000000', job_info) }
+    it 'is zero for a newly created job' do
+      expect(new_job.finished_subtree_size).to eq 0
+    end
+    it 'fetches the finished subtree size from redis' do
+      new_job[described_class::FINISHED_SUBTREE_SIZE_FIELD] = 10
+      expect(new_job.finished_subtree_size).to eq 10
+    end
+  end
+
+  describe '#increment_finished_subtree_size' do
+    let(:incr) { 10 }
+
+    it 'adds the increment to the job subtree size' do
+      expect { root.increment_finished_subtree_size(incr) }.
+        to change { root.finished_subtree_size }.
+        by(incr)
+    end
+
+    it 'adds the increment to each parent subtree size' do
+      expect { level2.last.increment_finished_subtree_size(incr) }.
+        to change { level2.last.parent.finished_subtree_size }.
+        by(incr)
+
+      expect { level2.last.increment_finished_subtree_size(incr) }.
+        to change { root.finished_subtree_size }.
+        by(incr)
+    end
+
+    it 'defaults to an increment of 1' do
+      expect { root.increment_finished_subtree_size }.
+        to change { root.finished_subtree_size }.
+        by(1)
+    end
+  end
+
   describe '#add_child' do
     let(:new_job) { described_class.create('000000000000', job_info) }
 
@@ -197,6 +282,16 @@ describe Sidekiq::Hierarchy::Job do
         to change { new_job.parent }.
         from(nil).
         to(root)
+    end
+
+    it "increments the parent's subtree size" do
+      expect(root).to receive(:increment_subtree_size).with(new_job.subtree_size)
+      root.add_child(new_job)
+    end
+
+    it "increments the parent's finished subtree size" do
+      expect(root).to receive(:increment_finished_subtree_size).with(new_job.finished_subtree_size)
+      root.add_child(new_job)
     end
   end
 
@@ -219,6 +314,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_complete
       expect(root).to_not be_requeued
       expect(root).to_not be_failed
+      expect(root).to_not be_finished
     end
     it 'operates correctly on an unpersisted job' do
       new_job.enqueue!
@@ -228,6 +324,10 @@ describe Sidekiq::Hierarchy::Job do
       allow(Time).to receive(:now).and_return(Time.at(0))
       new_job.enqueue!
       expect(new_job.enqueued_at).to eq Time.at(0)
+    end
+    it 'does not change the finished subtree size' do
+      expect { new_job.enqueue! }.
+        to_not change { new_job.finished_subtree_size }
     end
   end
 
@@ -240,6 +340,7 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_complete
       expect(root).to_not be_requeued
       expect(root).to_not be_failed
+      expect(root).to_not be_finished
     end
     it 'operates correctly on an unpersisted job' do
       new_job.run!
@@ -250,6 +351,10 @@ describe Sidekiq::Hierarchy::Job do
       root.run!
       expect(root.run_at).to eq Time.at(0)
     end
+    it 'does not change the finished subtree size' do
+      expect { new_job.run! }.
+        to_not change { new_job.finished_subtree_size }
+    end
   end
 
   describe '#complete!' do
@@ -257,6 +362,7 @@ describe Sidekiq::Hierarchy::Job do
     it 'sets the job status to complete' do
       root.complete!
       expect(root).to be_complete
+      expect(root).to be_finished
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_requeued
@@ -272,6 +378,11 @@ describe Sidekiq::Hierarchy::Job do
       expect(root.complete_at).to eq Time.at(0)
       expect(root.failed_at).to be_nil
     end
+    it 'increments the finished subtree size' do
+      expect { new_job.complete! }.
+        to change { new_job.finished_subtree_size }.
+        by(1)
+    end
   end
 
   describe '#requeue!' do
@@ -283,10 +394,15 @@ describe Sidekiq::Hierarchy::Job do
       expect(root).to_not be_running
       expect(root).to_not be_complete
       expect(root).to_not be_failed
+      expect(root).to_not be_finished
     end
     it 'operates correctly on an unpersisted job' do
       new_job.requeue!
       expect(new_job).to be_requeued
+    end
+    it 'does not change the finished subtree size' do
+      expect { new_job.requeue! }.
+        to_not change { new_job.finished_subtree_size }
     end
   end
 
@@ -295,6 +411,7 @@ describe Sidekiq::Hierarchy::Job do
     it 'sets the job status to failed' do
       root.fail!
       expect(root).to be_failed
+      expect(root).to be_finished
       expect(root).to_not be_enqueued
       expect(root).to_not be_running
       expect(root).to_not be_complete
@@ -309,6 +426,11 @@ describe Sidekiq::Hierarchy::Job do
       root.fail!
       expect(root.failed_at).to eq Time.at(0)
       expect(root.complete_at).to be_nil
+    end
+    it 'increments the finished subtree size' do
+      expect { new_job.fail! }.
+        to change { new_job.finished_subtree_size }.
+        by(1)
     end
   end
 

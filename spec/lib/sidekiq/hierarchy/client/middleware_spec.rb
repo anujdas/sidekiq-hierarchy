@@ -15,8 +15,8 @@ describe Sidekiq::Hierarchy::Client::Middleware do
       end
 
       context 'from a Sidekiq job' do
-        before { Sidekiq::Hierarchy.current_jid = parent_jid }
-        after  { Sidekiq::Hierarchy.current_jid = nil }
+        before { Sidekiq::Hierarchy.current_job = parent_job }
+        after  { Sidekiq::Hierarchy.current_job = nil }
 
         it "adds the created job to the current job's children list" do
           job_id = TestWorker.perform_async

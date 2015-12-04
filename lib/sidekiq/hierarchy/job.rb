@@ -7,10 +7,15 @@ module Sidekiq
       INFO_FIELD = 'i'.freeze
       PARENT_FIELD = 'p'.freeze
       STATUS_FIELD = 's'.freeze
-      WORKFLOW_STATUS_FIELD = 'w'.freeze
+
       ENQUEUED_AT_FIELD = 'e'.freeze
       RUN_AT_FIELD = 'r'.freeze
       COMPLETED_AT_FIELD = 'c'.freeze
+
+      WORKFLOW_STATUS_FIELD = 'w'.freeze
+      WORKFLOW_FINISHED_AT_FIELD = 'wf'.freeze
+      SUBTREE_SIZE_FIELD = 't'.freeze
+      FINISHED_SUBTREE_SIZE_FIELD = 'tf'.freeze
 
       # Values for STATUS_FIELD
       STATUS_ENQUEUED = '0'.freeze
@@ -37,6 +42,7 @@ module Sidekiq
         def create(jid, job_hash)
           new(jid).tap do |job|
             job[INFO_FIELD] = Sidekiq.dump_json(filtered_job_hash(job_hash))
+            job.increment_subtree_size  # start at subtree size 1 -- no children
           end
         end
 
@@ -121,6 +127,44 @@ module Sidekiq
         self.leaf? ? [self] : children.flat_map(&:leaves)
       end
 
+      # Walks the subtree rooted here in DFS order
+      # Returns an Enumerator; use #to_a to get an array instead
+      def subtree_jobs
+        to_visit = [self]
+        Enumerator.new do |y|
+          while node = to_visit.pop
+            y << node  # sugar for yielding a value
+            to_visit += node.children
+          end
+        end
+      end
+
+      # The cached cardinality of the tree rooted at this job
+      def subtree_size
+        self[SUBTREE_SIZE_FIELD].to_i
+      end
+
+      # Recursively updates subtree size on this and all higher subtrees
+      def increment_subtree_size(incr=1)
+        redis { |conn| conn.hincrby(redis_job_hkey, SUBTREE_SIZE_FIELD, incr) }
+        if p_job = parent
+          p_job.increment_subtree_size(incr)
+        end
+      end
+
+      # The cached count of the finished jobs in the tree rooted at this job
+      def finished_subtree_size
+        self[FINISHED_SUBTREE_SIZE_FIELD].to_i
+      end
+
+      # Recursively updates finished subtree size on this and all higher subtrees
+      def increment_finished_subtree_size(incr=1)
+        redis { |conn| conn.hincrby(redis_job_hkey, FINISHED_SUBTREE_SIZE_FIELD, incr) }
+        if p_job = parent
+          p_job.increment_finished_subtree_size(incr)
+        end
+      end
+
       # Draws a new doubly-linked parent-child relationship in redis
       def add_child(child_job)
         redis do |conn|
@@ -133,7 +177,10 @@ module Sidekiq
             conn.expire(redis_children_lkey, ONE_MONTH)
           end
         end
-        true  # will never fail w/o raising an exception
+
+        # updates subtree counts to reflect new child
+        increment_subtree_size(child_job.subtree_size)
+        increment_finished_subtree_size(child_job.finished_subtree_size)
       end
 
       def workflow
@@ -179,6 +226,7 @@ module Sidekiq
 
         self[STATUS_FIELD] = s_val
         self[t_field] = Time.now.to_f.to_s if t_field
+        increment_finished_subtree_size if [:failed, :complete].include?(new_status)
 
         Sidekiq::Hierarchy.publish(Notifications::JOB_UPDATE, self, new_status, old_status)
       end
@@ -248,6 +296,10 @@ module Sidekiq
         if failed? && t = self[COMPLETED_AT_FIELD]
           Time.at(t.to_f)
         end
+      end
+
+      def finished?
+        [:failed, :complete].include?(status)  # two terminal states
       end
 
       def finished_at

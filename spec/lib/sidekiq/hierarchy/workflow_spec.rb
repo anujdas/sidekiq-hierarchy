@@ -116,6 +116,23 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
+  describe '#job_count' do
+    let(:new_job) { Sidekiq::Hierarchy::Job.create('new', job_info) }
+    it 'returns the tree size' do
+      expect(workflow.job_count).to eq workflow.jobs.count
+      level2.last.add_child(new_job)
+      expect(workflow.job_count).to eq workflow.jobs.count
+    end
+  end
+
+  describe '#finished_job_count' do
+    it 'returns the number of finished jobs in the tree' do
+      expect(workflow.finished_job_count).to eq workflow.jobs.select(&:finished?).count
+      workflow.jobs.each(&:complete!)
+      expect(workflow.finished_job_count).to eq workflow.jobs.select(&:finished?).count
+    end
+  end
+
   describe '#status' do
     it 'reflects the current status as a symbol' do
       workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_RUNNING
@@ -134,6 +151,10 @@ describe Sidekiq::Hierarchy::Workflow do
   end
 
   describe '#update_status' do
+    let(:timestamp) { Time.at(1000000) }
+
+    before { allow(Time).to receive(:now).and_return(timestamp) }
+
     before do
       (level1 + level2).each(&:complete!)
       root.requeue!
@@ -165,19 +186,29 @@ describe Sidekiq::Hierarchy::Workflow do
       it 'sets the status to failed' do
         expect(workflow.status).to eq :failed
       end
+      it 'sets the workflow finished time' do
+        expect(workflow.finished_at).to eq Time.now
+      end
     end
 
     context 'when a job completes' do
-      context 'and some jobs are still incomplete' do
+      context 'and the tree includes incomplete jobs' do
         it 'does not change the workflow status' do
           expect { workflow.update_status(:complete) }.to_not change { workflow.status }
         end
       end
-      context 'and all other jobs are completed' do
-        before { root[Sidekiq::Hierarchy::Job::STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_COMPLETE }
-        it 'sets the status to failed' do
-          workflow.update_status(:complete)
-          expect(workflow.status).to eq :complete
+
+      context 'and all jobs in the tree are completed' do
+        before { root[Sidekiq::Hierarchy::Job::FINISHED_SUBTREE_SIZE_FIELD] = root.subtree_size }
+        it 'sets the status to complete' do
+          expect { workflow.update_status(:complete) }.
+            to change { workflow.status }.
+            to(:complete)
+        end
+        it 'sets the workflow finished time' do
+          expect { workflow.update_status(:complete) }.
+            to change { workflow.finished_at }.
+            to(Time.now)
         end
       end
     end
@@ -226,40 +257,53 @@ describe Sidekiq::Hierarchy::Workflow do
   end
 
   describe '#complete_at' do
-    before do
-      root.complete!
-      level1.each(&:complete!)
-    end
+    let(:timestamp) { Time.at(1000000) }
+    before { allow(Time).to receive(:now).and_return(timestamp) }
 
-    context 'with some jobs incomplete' do
+    context 'with an incomplete workflow' do
       it 'returns nil' do
         expect(workflow.complete_at).to be_nil
       end
     end
 
-    context 'with all jobs complete' do
-      let(:newest) { Time.now + 60*60 }
-      before do
-        level2.each(&:complete!)
-        root[Sidekiq::Hierarchy::Job::COMPLETED_AT_FIELD] = newest.to_f.to_s  # avoid triggering callback
-      end
-      it 'returns the most recent completion time' do
-        expect(workflow.complete_at.to_f).to eq newest.to_f
+    context 'with a complete workflow' do
+      before { workflow.jobs.each(&:complete!) }
+      it 'returns the workflow finish timestamp' do
+        expect(workflow.complete_at.to_f).to eq timestamp.to_f
       end
     end
   end
 
   describe '#failed_at' do
-    context 'with no failed jobs' do
+    let(:timestamp) { Time.at(1000000) }
+    before { allow(Time).to receive(:now).and_return(timestamp) }
+
+    context 'with a non-failed workflow' do
       it 'returns nil' do
         expect(workflow.failed_at).to be_nil
       end
     end
 
-    context 'with failed jobs' do
+    context 'with a failed workflow' do
       before { level1.each(&:fail!) }
       it 'returns the earliest failure time' do
         expect(workflow.failed_at.to_f).to eq level1.map(&:failed_at).min.to_f
+      end
+    end
+  end
+
+  describe '#finished_at' do
+    context 'without the workflow finished timestamp set' do
+      it 'is nil' do
+        expect(workflow.finished_at).to be_nil
+      end
+    end
+
+    context 'with the workflow finished timestamp set' do
+      let(:timestamp) { Time.now }
+      before { workflow[Sidekiq::Hierarchy::Job::WORKFLOW_FINISHED_AT_FIELD] = timestamp.to_f.to_s }
+      it 'returns the stored time' do
+        expect(workflow.finished_at.to_f).to eq timestamp.to_f
       end
     end
   end

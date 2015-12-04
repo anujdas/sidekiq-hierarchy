@@ -6,8 +6,8 @@ module Sidekiq
     module Faraday
       class Middleware < ::Faraday::Middleware
         def call(env)
-          if Sidekiq::Hierarchy.current_workflow && Sidekiq::Hierarchy.current_jid
-            env[:request_headers][Sidekiq::Hierarchy::Http::JID_HEADER] = Sidekiq::Hierarchy.current_jid
+          if Sidekiq::Hierarchy.current_workflow && Sidekiq::Hierarchy.current_job
+            env[:request_headers][Sidekiq::Hierarchy::Http::JOB_HEADER] = Sidekiq::Hierarchy.current_job.jid
             env[:request_headers][Sidekiq::Hierarchy::Http::WORKFLOW_HEADER] = Sidekiq::Hierarchy.current_workflow.jid
           end
           @app.call(env)

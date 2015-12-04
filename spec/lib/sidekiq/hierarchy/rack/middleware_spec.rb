@@ -5,7 +5,7 @@ require 'sidekiq/hierarchy/rack/middleware'
 describe Sidekiq::Hierarchy::Rack::Middleware do
   def mock_env(jid, workflow)
     headers = {}
-    headers[described_class::JID_HEADER_KEY] = jid if jid
+    headers[described_class::JOB_HEADER_KEY] = jid if jid
     headers[described_class::WORKFLOW_HEADER_KEY] = workflow if workflow
     @request = Rack::MockRequest.env_for('/', headers)
   end
@@ -13,7 +13,8 @@ describe Sidekiq::Hierarchy::Rack::Middleware do
   let(:app) do
     lambda do |_env|
       workflow_jid = Sidekiq::Hierarchy.current_workflow.jid if Sidekiq::Hierarchy.current_workflow
-      body = {workflow: workflow_jid, jid: Sidekiq::Hierarchy.current_jid}
+      jid = Sidekiq::Hierarchy.current_job.jid if Sidekiq::Hierarchy.current_job
+      body = {workflow: workflow_jid, jid: jid}
       [200, {'Content-Type' => 'application/json'}, [body.to_json]]
     end
   end
@@ -60,7 +61,7 @@ describe Sidekiq::Hierarchy::Rack::Middleware do
       end
       it 'cleans up after the request' do
         status, headers, body = middleware.call(mock_env(jid, workflow))
-        expect(Sidekiq::Hierarchy.current_jid).to be_nil
+        expect(Sidekiq::Hierarchy.current_job).to be_nil
         expect(Sidekiq::Hierarchy.current_workflow).to be_nil
       end
     end

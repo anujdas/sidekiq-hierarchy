@@ -8,7 +8,7 @@
         <th>Run at</th>
         <th>Completed at</th>
         <th>Failed at</th>
-        <th>Jobs</th>
+        <th>Completion</th>
       </tr>
     </thead>
 
@@ -25,7 +25,7 @@
           <td><%= workflow.run_at %></td>
           <td><%= workflow.complete_at %></td>
           <td><%= workflow.failed_at %></td>
-          <td><%= workflow.jobs.count %></td>
+          <td><%= workflow.finished_job_count %>/<%= workflow.job_count %></td>
         </tr>
       <% end%>
     </tbody>

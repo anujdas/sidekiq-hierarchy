@@ -28,6 +28,10 @@ module Sidekiq
           "#{root_path}hierarchy/workflow_sets/#{status}"
         end
 
+        def safe_relative_time(timestamp)
+          timestamp.nil? ? '-' : relative_time(timestamp)
+        end
+
         def status_updated_at(job)
           case job.status
           when :enqueued

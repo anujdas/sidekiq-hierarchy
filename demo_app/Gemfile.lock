@@ -1,7 +1,8 @@
 PATH
   remote: ../
   specs:
-    sidekiq-hierarchy (1.0.0)
+    sidekiq-hierarchy (2.0.0)
+      connection_pool (~> 2.0)
       sidekiq (~> 3.3)
 
 GEM
