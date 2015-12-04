@@ -182,6 +182,17 @@ describe Sidekiq::Hierarchy::Job do
     end
   end
 
+  describe '#subtree_jobs' do
+    it 'returns a lazy Enumerator' do
+      expect(root.subtree_jobs).to be_an Enumerator
+      expect(root.subtree_jobs.first.jid).to eq root.jid
+      expect(root.subtree_jobs.count).to eq ([root] + level1 + level2).length
+    end
+    it 'traverses all nodes depth-first reverse-order' do
+      expect(root.subtree_jobs.map(&:jid)).to eq ['0', '2', '1', '4', '3']
+    end
+  end
+
   describe '#subtree_size' do
     let(:new_job) { described_class.create('000000000000', job_info) }
     it 'is one for a newly created job' do

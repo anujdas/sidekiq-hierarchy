@@ -107,11 +107,17 @@ Some examples to try, given a root `JID`:
 => [2015-11-11 15:00:42 -0800, 2015-11-11 15:00:42 -0800, 2015-11-11 15:01:32 -0800]
 ```
 ```ruby
+> workflow.job_count  # stored value, no iteration necessary
+=> 33
+
 > workflow.jobs.count  # lazily eval'd
 => 33
 
 > workflow.jobs.map(&:jid)
 => ["11c3ec3df251ebb646f910d7", "f003db430a0eae99d72f1b7a", "bc2cf8f3de3b87f9a4c3c10e", ...]
+
+> workflow.finished_job_count
+=> 33
 ```
 ```ruby
 > root_job = workflow.root

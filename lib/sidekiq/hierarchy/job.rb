@@ -127,6 +127,18 @@ module Sidekiq
         self.leaf? ? [self] : children.flat_map(&:leaves)
       end
 
+      # Walks the subtree rooted here in DFS order
+      # Returns an Enumerator; use #to_a to get an array instead
+      def subtree_jobs
+        to_visit = [self]
+        Enumerator.new do |y|
+          while node = to_visit.pop
+            y << node  # sugar for yielding a value
+            to_visit += node.children
+          end
+        end
+      end
+
       # The cached cardinality of the tree rooted at this job
       def subtree_size
         self[SUBTREE_SIZE_FIELD].to_i

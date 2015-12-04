@@ -34,18 +34,9 @@ module Sidekiq
         wset.remove(self) if wset  # now we can clear out from the set
       end
 
-      # Walks the tree in DFS order (for optimal completion checking)
-      # Returns an Enumerator; use #to_a to get an array instead
-      def jobs
-        to_visit = [root]
-        Enumerator.new do |y|
-          while node = to_visit.pop
-            y << node  # sugar for yielding a value
-            to_visit += node.children
-          end
-        end
-      end
-
+      def_delegator :@root, :subtree_jobs, :jobs
+      def_delegator :@root, :subtree_size, :job_count
+      def_delegator :@root, :finished_subtree_size, :finished_job_count
 
       ### Status
 
@@ -125,9 +116,7 @@ module Sidekiq
 
       ### Serialisation
 
-      def as_json(options={})
-        root.as_json(options)
-      end
+      delegate :as_json => :@root
 
       def to_s
         Sidekiq.dump_json(self.as_json)

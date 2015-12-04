@@ -116,6 +116,23 @@ describe Sidekiq::Hierarchy::Workflow do
     end
   end
 
+  describe '#job_count' do
+    let(:new_job) { Sidekiq::Hierarchy::Job.create('new', job_info) }
+    it 'returns the tree size' do
+      expect(workflow.job_count).to eq workflow.jobs.count
+      level2.last.add_child(new_job)
+      expect(workflow.job_count).to eq workflow.jobs.count
+    end
+  end
+
+  describe '#finished_job_count' do
+    it 'returns the number of finished jobs in the tree' do
+      expect(workflow.finished_job_count).to eq workflow.jobs.select(&:finished?).count
+      workflow.jobs.each(&:complete!)
+      expect(workflow.finished_job_count).to eq workflow.jobs.select(&:finished?).count
+    end
+  end
+
   describe '#status' do
     it 'reflects the current status as a symbol' do
       workflow[Sidekiq::Hierarchy::Job::WORKFLOW_STATUS_FIELD] = Sidekiq::Hierarchy::Job::STATUS_RUNNING
