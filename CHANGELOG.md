@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.0] - 2015-12-04
+### Changed
+- Use Sinatra template helpers to get template caching for views
+
+### Added
+- Support using a separate Redis connection/pool for workflow storage
+
 ## [1.0.0] - 2015-11-19
 ### Changed
 - Nothing: bumping for first production release
