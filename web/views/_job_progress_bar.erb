@@ -3,26 +3,26 @@
 <% run_at = job.run_at %>
 
 <% if status == :enqueued %>
-  <%= erb sidekiq_hierarchy_template(:_progress_bar), locals: {bars: [[:enqueued, 1.0]]} %>
+  <%= erb :_progress_bar, locals: {bars: [[:enqueued, 1.0]]} %>
 
 <% elsif status == :requeued %>
-  <%= erb sidekiq_hierarchy_template(:_progress_bar), locals: {bars: [[:requeued, 1.0]]} %>
+  <%= erb :_progress_bar, locals: {bars: [[:requeued, 1.0]]} %>
 
 <% elsif status == :running %>
   <% runtime = Time.now - enqueued_at %>
   <% enqueued_pct = (run_at - enqueued_at) / runtime %>
   <% run_pct = 1.0 - enqueued_pct %>
-  <%= erb sidekiq_hierarchy_template(:_progress_bar), locals: {bars: [[:enqueued, enqueued_pct], [:running, run_pct]], active: true} %>
+  <%= erb :_progress_bar, locals: {bars: [[:enqueued, enqueued_pct], [:running, run_pct]], active: true} %>
 
 <% elsif status == :complete %>
   <% runtime = job.complete_at - enqueued_at %>
   <% enqueued_pct = (run_at - enqueued_at) / runtime %>
   <% run_pct = 1.0 - enqueued_pct %>
-  <%= erb sidekiq_hierarchy_template(:_progress_bar), locals: {bars: [[:enqueued, enqueued_pct], [:complete, run_pct]]} %>
+  <%= erb :_progress_bar, locals: {bars: [[:enqueued, enqueued_pct], [:complete, run_pct]]} %>
 
 <% elsif status == :failed %>
   <% runtime = job.failed_at - enqueued_at %>
   <% enqueued_pct = (run_at - enqueued_at) / runtime %>
   <% failed_pct = 1.0 - enqueued_pct %>
-  <%= erb sidekiq_hierarchy_template(:_progress_bar), locals: {bars: [[:enqueued, enqueued_pct], [:failed, failed_pct]]} %>
+  <%= erb :_progress_bar, locals: {bars: [[:enqueued, enqueued_pct], [:failed, failed_pct]]} %>
 <% end %>

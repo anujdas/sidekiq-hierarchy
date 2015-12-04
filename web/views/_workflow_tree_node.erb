@@ -11,7 +11,7 @@
   <% unless job.leaf? %>
     <ul>
       <% job.children.each do |child| %>
-        <%= erb sidekiq_hierarchy_template(:_workflow_tree_node), locals: {job: child} %>
+        <%= erb :_workflow_tree_node, locals: {job: child} %>
       <% end %>
     </ul>
   <% end %>

@@ -7,8 +7,13 @@ module Sidekiq
   module Hierarchy
     module Web
       module Helpers
-        def sidekiq_hierarchy_template(template_name)
-          File.read(File.join(VIEW_PATH, "#{template_name}.erb"))
+        # Override find_template logic to process arrays of view directories
+        # warning: this may be incompatible with other overrides of find_template,
+        # though that really shouldn't happen if they match the method contract
+        def find_template(views, name, engine, &block)
+          Array(views).each do |view_dir|
+            super(view_dir, name, engine, &block)
+          end
         end
 
         def job_url(job=nil)
@@ -54,10 +59,11 @@ module Sidekiq
       PER_PAGE = 20
 
       def self.registered(app)
+        app.set :views, [*app.views, VIEW_PATH]
         app.helpers Helpers
 
         app.not_found do
-          erb sidekiq_hierarchy_template(:not_found)
+          erb :not_found
         end
 
         app.get '/hierarchy/?' do
@@ -69,7 +75,7 @@ module Sidekiq
           @complete = @complete_set.each.take(PER_PAGE)
           @failed = @failed_set.each.take(PER_PAGE)
 
-          erb sidekiq_hierarchy_template(:status)
+          erb :status
         end
 
         app.delete '/hierarchy/?' do
@@ -81,7 +87,7 @@ module Sidekiq
           @status = status.to_sym
           if @workflow_set = WorkflowSet.for_status(@status)
             @workflows = @workflow_set.each.take(PER_PAGE)
-            erb sidekiq_hierarchy_template(:workflow_set)
+            erb :workflow_set
           else
             halt 404
           end
@@ -108,7 +114,7 @@ module Sidekiq
         app.get %r{\A/hierarchy/workflows/(\h{24})\z} do |workflow_jid|
           @workflow = Workflow.find_by_jid(workflow_jid)
           if @workflow.exists?
-            erb sidekiq_hierarchy_template(:workflow)
+            erb :workflow
           else
             halt 404
           end
@@ -134,7 +140,7 @@ module Sidekiq
           @job = Job.find(jid)
           @workflow = @job.workflow
           if @job.exists? && @workflow.exists?
-            erb sidekiq_hierarchy_template(:job)
+            erb :job
           else
             halt 404
           end

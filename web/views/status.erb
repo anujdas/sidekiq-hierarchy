@@ -1,7 +1,7 @@
 <h3>Sidekiq Hierarchy</h3>
 
-<%= erb sidekiq_hierarchy_template(:_summary_bar) %>
-<%= erb sidekiq_hierarchy_template(:_search_bar) %>
+<%= erb :_summary_bar %>
+<%= erb :_search_bar %>
 
 <div class="panel panel-info">
   <div class="panel-heading">
@@ -77,7 +77,7 @@
       </table>
     </div>
 
-    <%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :complete} %>
+    <%= erb :_workflow_set_clear, locals: {status: :complete} %>
   </div>
 </div>
 
@@ -118,6 +118,6 @@
       </table>
     </div>
 
-    <%= erb sidekiq_hierarchy_template(:_workflow_set_clear), locals: {status: :failed} %>
+    <%= erb :_workflow_set_clear, locals: {status: :failed} %>
   </div>
 </div>
