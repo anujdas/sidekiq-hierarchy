@@ -99,6 +99,15 @@ module Sidekiq
             halt 404
           end
         end
+
+        app.get %r{\A/hierarchy/jobs/(\h{24})/subtree\z} do |jid|
+          job = Job.find(jid)
+          if job.exists?
+            erb :_job_tree_node, {layout: false}, {job: job}
+          else
+            halt 404
+          end
+        end
       end
     end
   end

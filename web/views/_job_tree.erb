@@ -74,8 +74,25 @@
   }
 </style>
 
+<script>
+  $(function() {
+    // hook collapsed job nodes to permit lazy in-place expansion
+    function attachListeners() {
+      $(".collapsed_job_node a").click(function(e) {
+        e.preventDefault();
+        // replace collapsed node with tree from AJAX
+        $.get(e.target.href + "/subtree", function(subtree) {
+          $(e.target.parentNode).replaceWith(subtree);
+          attachListeners()  // attach listeners to newly inserted nodes
+        })
+      })
+    }
+    attachListeners() // perform initial attachment
+  })
+</script>
+
 <ul class="job_tree">
   <% unless root.root? %><ul><% end %>
-    <%= erb :_job_tree_node, locals: {job: root} %>
+    <%= erb subtree_template(root), locals: {job: root} %>
   <% unless root.root? %></ul><% end %>
 </ul>

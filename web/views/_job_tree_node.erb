@@ -15,7 +15,7 @@
   <% if children.any? %>
     <ul>
       <% children.each do |child| %>
-        <%= :_job_tree_node, locals: {job: child} %>
+        <%= erb subtree_template(child), locals: {job: child} %>
       <% end %>
     </ul>
   <% end %>

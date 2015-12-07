@@ -12,6 +12,8 @@ module Sidekiq
           1 => 'second',
         }
 
+        COLLAPSED_SUBTREE_THRESHOLD = 500
+
 
         ### TEMPLATE HELPERS
 
@@ -23,6 +25,15 @@ module Sidekiq
             super(view_dir, name, engine, &block)
           end
         end
+
+        def subtree_template(job)
+          if job.subtree_size > COLLAPSED_SUBTREE_THRESHOLD
+            :_job_tree_collapsed
+          else
+            :_job_tree_node
+          end
+        end
+
 
         ### ROUTE HELPERS
 

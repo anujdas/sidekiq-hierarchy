@@ -1,0 +1,13 @@
+<li class="collapsed_job_node">
+  <a href="<%= root_path %>hierarchy/jobs/<%= job.jid %>">
+    <span title="<%= job.jid %>">
+      <%= job.info['class'] %>
+    </span>
+
+    (<%= job.info['queue'] %>)
+
+    <%- descendants = job.subtree_size - 1 %>
+    <%- finished_descendants = job.finished_subtree_size - 1 %>
+    [+ <%= descendants %> more, <%= descendants - finished_descendants %> running]
+  </a>
+</li>
