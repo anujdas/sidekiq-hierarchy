@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.1] - 2015-12-07
+### Changed
+- Collapse job tree in web UI in case of huge workflows, keeping things snappy
+- Allow lazy loading of workflow subtrees in web UI for easy navigation of large trees
+- Display jobs with their runtime instead of their time of completion to ease spotting of bottlenecks
+
 ## [2.0.0] - 2015-12-04
 ### Changed
 - HTTP headers renamed to make roles more clear
