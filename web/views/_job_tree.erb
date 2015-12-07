@@ -1,0 +1,81 @@
+<style>
+  /* Adapted from http://www.cssscript.com/demo/minimalist-tree-view-in-pure-css */
+
+  ul.job_tree  {
+    padding-left: 0px;
+  }
+
+  .job_tree li {
+    list-style-type: none;
+    margin: 10px;
+    position: relative;
+  }
+
+  .job_tree li::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: -20px;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0 0 0 0px;
+    width: 20px;
+    height: 15px;
+  }
+
+  .job_tree li::after {
+    position: absolute;
+    content: "";
+    top: 8px;
+    left: -20px;
+    border-left: 1px solid #ccc;
+    border-top: 1px solid #ccc;
+    border-radius: 0px 0 0 0;
+    width: 20px;
+    height: 100%;
+  }
+
+  .job_tree li:last-child::after  {
+    display: none;
+  }
+
+  .job_tree li:last-child:before{
+    border-radius: 0 0 0 5px;
+  }
+
+  ul.job_tree > li:first-child::before {
+    display: none;
+  }
+
+  ul.job_tree > li:first-child::after {
+    border-radius: 5px 0 0 0;
+  }
+
+  .job_tree li a {
+    border-radius: 5px;
+    padding: 2px 5px;
+  }
+
+  .job_tree li a:hover, .job_tree li a:focus {
+    background: #ccc;
+    color: #000;
+    text-decoration: none;
+  }
+
+  .job_tree li a:hover+ul li a, .job_tree li a:focus+ul li a {
+    color: #000;
+  }
+
+  .job_tree li a:hover+ul li::after, .job_tree li a:focus+ul li::after,
+  .job_tree li a:hover+ul li::before, .job_tree li a:focus+ul li::before 
+  .job_tree li a:hover+ul::before, .job_tree li a:focus+ul::before 
+  .job_tree li a:hover+ul ul::before, .job_tree li a:focus+ul ul::before{
+    border-color: #000;
+  }
+</style>
+
+<ul class="job_tree">
+  <% unless root.root? %><ul><% end %>
+    <%= erb :_job_tree_node, locals: {job: root} %>
+  <% unless root.root? %></ul><% end %>
+</ul>

@@ -1,11 +1,13 @@
-<li>
+<li class="job_node">
   <a href="<%= root_path %>hierarchy/jobs/<%= job.jid %>">
     <span title="<%= job.jid %>">
       <%= job.info['class'] %>
     </span>
+
     (<%= job.info['queue'] %>)
+
     <span class="label label-<%= bootstrap_status(job.status) %>">
-      <%= job.status %> <%= safe_relative_time(status_updated_at(job)) %>
+      <%= status_in_words(job) %>
     </span>
   </a>
 
@@ -13,7 +15,7 @@
   <% if children.any? %>
     <ul>
       <% children.each do |child| %>
-        <%= erb :_workflow_tree_node, locals: {job: child} %>
+        <%= :_job_tree_node, locals: {job: child} %>
       <% end %>
     </ul>
   <% end %>

@@ -31,7 +31,7 @@
 <%= erb :_workflow_timings, locals: {workflow: @workflow} %>
 
 <h4>Job Tree</h4>
-<%= erb :_workflow_tree, locals: {root: @workflow.root} %>
+<%= erb :_job_tree, locals: {root: @workflow.root} %>
 
 <h4>Jobs</h4>
 <%= erb :_job_table, locals: {jobs: @workflow.jobs} %>

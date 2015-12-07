@@ -2,6 +2,19 @@ module Sidekiq
   module Hierarchy
     module Web
       module Helpers
+        TIME_TO_WORD = {
+          29030400 => 'year',
+          2419200 => 'month',
+          604800 => 'week',
+          86400 => 'day',
+          3600 => 'hour',
+          60 => 'minute',
+          1 => 'second',
+        }
+
+
+        ### TEMPLATE HELPERS
+
         # Override find_template logic to process arrays of view directories
         # warning: this may be incompatible with other overrides of find_template,
         # though that really shouldn't happen if they match the method contract
@@ -10,6 +23,8 @@ module Sidekiq
             super(view_dir, name, engine, &block)
           end
         end
+
+        ### ROUTE HELPERS
 
         def job_url(job=nil)
           "#{root_path}hierarchy/jobs/#{job.jid if job}"
@@ -23,22 +38,22 @@ module Sidekiq
           "#{root_path}hierarchy/workflow_sets/#{status}"
         end
 
+
+        ### FORMATTING HELPERS
+
         def safe_relative_time(timestamp)
           timestamp.nil? ? '-' : relative_time(timestamp)
         end
 
-        def status_updated_at(job)
-          case job.status
-          when :enqueued
-            job.enqueued_at
-          when :running, :requeued
-            job.run_at
-          when :complete
-            job.complete_at
-          when :failed
-            job.failed_at
-          end
+        def time_in_words(time)
+          divisor, period = TIME_TO_WORD.select { |secs, _| time.ceil >= secs }.max_by(&:first)
+          duration = (time / divisor).to_i
+
+          "#{duration} #{period}#{'s' unless duration == 1}"
         end
+
+
+        ### HUMANIZATION HELPERS
 
         def bootstrap_status(status)
           case status
@@ -50,6 +65,21 @@ module Sidekiq
             'success'
           when :failed
             'danger'
+          end
+        end
+
+        def status_in_words(job)
+          case job.status
+          when :enqueued
+            "enqueued #{safe_relative_time(job.enqueued_at)}"
+          when :requeued
+            "requeued #{safe_relative_time(job.enqueued_at)}"
+          when :running
+            "running #{time_in_words(Time.now - job.run_at)}"
+          when :complete
+            "complete in #{time_in_words(job.complete_at - job.run_at)}"
+          when :failed
+            "failed in #{time_in_words(job.failed_at - job.run_at)}"
           end
         end
       end
