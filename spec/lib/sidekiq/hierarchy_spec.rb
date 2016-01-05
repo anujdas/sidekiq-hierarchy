@@ -137,7 +137,7 @@ describe Sidekiq::Hierarchy do
       end
     end
     context 'with workflow tracking enabled' do
-      before { described_class.current_workflow = jid }
+      before { described_class.current_workflow = workflow }
       it 'sets the status for the current job to running' do
         described_class.record_job_running
         expect(Sidekiq::Hierarchy::Job.find(jid)).to be_running
@@ -154,7 +154,7 @@ describe Sidekiq::Hierarchy do
       end
     end
     context 'with workflow tracking enabled' do
-      before { described_class.current_workflow = jid }
+      before { described_class.current_workflow = workflow }
       it 'sets the status for the current job to complete' do
         described_class.record_job_complete
         expect(Sidekiq::Hierarchy::Job.find(jid)).to be_complete
@@ -171,7 +171,7 @@ describe Sidekiq::Hierarchy do
       end
     end
     context 'with workflow tracking enabled' do
-      before { described_class.current_workflow = jid }
+      before { described_class.current_workflow = workflow }
       it 'sets the status for the current job to requeued' do
         described_class.record_job_requeued
         expect(Sidekiq::Hierarchy::Job.find(jid)).to be_requeued
@@ -188,7 +188,7 @@ describe Sidekiq::Hierarchy do
       end
     end
     context 'with workflow tracking enabled' do
-      before { described_class.current_workflow = jid }
+      before { described_class.current_workflow = workflow }
       it 'sets the status for the current job to failed' do
         described_class.record_job_failed
         expect(Sidekiq::Hierarchy::Job.find(jid)).to be_failed

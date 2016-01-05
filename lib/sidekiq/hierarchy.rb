@@ -16,6 +16,9 @@ require 'sidekiq/hierarchy/client/middleware'
 
 module Sidekiq
   module Hierarchy
+    WORKFLOW_LOCAL = :sidekiq_hierarchy_workflow
+    JOB_LOCAL = :sidekiq_hierarchy_job
+
     class << self
 
       ### Global redis store -- overrides default Sidekiq redis
@@ -34,22 +37,22 @@ module Sidekiq
 
       # Sets the workflow object for the current fiber/worker
       def current_workflow=(workflow)
-        Thread.current[:sidekiq_hierarchy_workflow] = workflow
+        Thread.current[WORKFLOW_LOCAL] = workflow if workflow && workflow.exists?
       end
 
       # Retrieves the current Sidekiq workflow if previously set
       def current_workflow
-        Thread.current[:sidekiq_hierarchy_workflow]
+        Thread.current[WORKFLOW_LOCAL]
       end
 
       # Sets the job for the current fiber/worker
       def current_job=(job)
-        Thread.current[:sidekiq_hierarchy_job] = job
+        Thread.current[JOB_LOCAL] = job if job && job.exists?
       end
 
       # Retrieves job for the current Sidekiq job if previously set
       def current_job
-        Thread.current[:sidekiq_hierarchy_job]
+        Thread.current[JOB_LOCAL]
       end
 
 

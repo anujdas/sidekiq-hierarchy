@@ -7,7 +7,7 @@ describe Sidekiq::Hierarchy::Client::Middleware do
   before { parent_job.complete! }
 
   describe '#call' do
-    context 'on job creation' do
+    context 'on successful job creation' do
       it 'marks the new job as enqueued' do
         job_id = TestWorker.perform_async
         expect(TestWorker).to have_enqueued_job

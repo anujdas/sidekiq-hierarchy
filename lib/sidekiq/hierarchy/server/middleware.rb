@@ -12,12 +12,8 @@ module Sidekiq
         # Must propagate return value upwards.
         # Since jobs raise errors for signalling, those must be propagated as well.
         def call(worker, msg, queue)
-          if msg['workflow'] == true  # root job -- start of a new workflow
-            Sidekiq::Hierarchy.current_workflow = Workflow.find_by_jid(worker.jid)
-            Sidekiq::Hierarchy.current_job = Sidekiq::Hierarchy.current_workflow.root
-          elsif msg['workflow'].is_a?(String)  # child job -- inherit parent's workflow
-            Sidekiq::Hierarchy.current_workflow = Workflow.find_by_jid(msg['workflow'])
-            Sidekiq::Hierarchy.current_job = Job.find(worker.jid)
+          if Sidekiq::Hierarchy.current_job = Job.find(worker.jid)
+            Sidekiq::Hierarchy.current_workflow = Sidekiq::Hierarchy.current_job.workflow
           end
 
           Sidekiq::Hierarchy.record_job_running
