@@ -18,7 +18,7 @@ You may want to use sidekiq-hierarchy if you:
 
 ![Web UI](img/in_progress_workflow.png?raw=true)
 
-Disclaimer: Sidekiq-hierarchy supports Sidekiq 3.x, and thus MRI 2.0+ and JRuby; it may work on MRI 1.9, but this configuration is untested as Sidekiq's unit testing support does not extend to it.
+Disclaimer: Sidekiq-hierarchy supports Sidekiq 3.x and 4.x, and thus MRI 2.0+ and JRuby; it may work on MRI 1.9, but this configuration is untested as Sidekiq's unit testing support does not extend to it.
 
 ## Table of Contents
 
