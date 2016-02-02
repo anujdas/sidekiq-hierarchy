@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.0.1] - 2016-02-02
+### Added
+- Support Sidekiq 4.x (tests pass and basic usage shows no errors)
+
 ## [2.0.1] - 2015-12-07
 ### Changed
 - Collapse job tree in web UI in case of huge workflows, keeping things snappy

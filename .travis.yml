@@ -3,4 +3,8 @@ rvm:
   - jruby-1.7
   - jruby-9k
   - 2.2
+gemfile:
+  - Gemfile.sidekiq-3
+  - Gemfile.sidekiq-4
+  - Gemfile
 before_install: gem install bundler -v 1.10.6

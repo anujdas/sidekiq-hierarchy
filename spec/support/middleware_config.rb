@@ -1,4 +1,6 @@
-require 'celluloid'  # required for retry_jobs
+if Gem::Dependency.new('', '~> 3.0').match?('', Sidekiq::VERSION)
+  require 'celluloid'  # required for retry_jobs in Sidekiq 3.x
+end
 require 'sidekiq/middleware/server/retry_jobs'
 
 Sidekiq.configure_client do |config|
