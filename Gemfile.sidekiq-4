@@ -1,0 +1,9 @@
+source 'https://rubygems.org'
+
+gem 'sidekiq', '~> 4.1'
+
+group :test do
+  gem 'pry'
+end
+
+gemspec
